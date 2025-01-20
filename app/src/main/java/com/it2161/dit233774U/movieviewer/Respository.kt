@@ -8,8 +8,9 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 class Repository(context: Context) {
     private val apiService: ApiService
-    private val userDao: UserDao
-    private val favoriteMovieDao: FavoriteMovieDao
+    private val database: AppDatabase = AppDatabase.getDatabase(context)
+    private val userDao: UserDao = database.userDao()
+    private val favoriteMovieDao: FavoriteMovieDao = database.favoriteMovieDao()
 
     init {
         val retrofit = Retrofit.Builder()
@@ -18,10 +19,6 @@ class Repository(context: Context) {
             .build()
 
         apiService = retrofit.create(ApiService::class.java)
-
-        val database = AppDatabase.getDatabase(context)
-        userDao = database.userDao()
-        favoriteMovieDao = database.favoriteMovieDao()
     }
 
     private val apiKey = "531a735640057af99e002f9185093005"

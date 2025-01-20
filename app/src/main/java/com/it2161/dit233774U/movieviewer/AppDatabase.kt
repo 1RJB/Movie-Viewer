@@ -1,6 +1,7 @@
 package com.it2161.dit233774U.movieviewer
 
 import android.content.Context
+import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.Delete
 import androidx.room.Insert
@@ -32,6 +33,7 @@ abstract class AppDatabase : RoomDatabase() {
     }
 }
 
+@Dao
 interface UserDao {
     @Query("SELECT * FROM users WHERE userId = :userId")
     suspend fun getUser(userId: String): User?
@@ -40,6 +42,7 @@ interface UserDao {
     suspend fun insertUser(user: User)
 }
 
+@Dao
 interface FavoriteMovieDao {
     @Query("SELECT * FROM favorite_movies WHERE userId = :userId")
     suspend fun getFavoriteMovies(userId: String): List<FavoriteMovie>

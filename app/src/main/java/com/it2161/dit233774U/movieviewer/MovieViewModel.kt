@@ -3,6 +3,7 @@ package com.it2161.dit233774U.movieviewer
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -26,69 +27,69 @@ class MovieViewModel(application: Application) : AndroidViewModel(application) {
     val currentUser: StateFlow<User?> = _currentUser
 
     fun getPopularMovies() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val response = repository.getPopularMovies()
             _movies.value = response.results
         }
     }
 
     fun getTopRatedMovies() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val response = repository.getTopRatedMovies()
             _movies.value = response.results
         }
     }
 
     fun getNowPlayingMovies() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val response = repository.getNowPlayingMovies()
             _movies.value = response.results
         }
     }
 
     fun getUpcomingMovies() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val response = repository.getUpcomingMovies()
             _movies.value = response.results
         }
     }
 
     fun getMovieDetails(movieId: Int) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             _movieDetails.value = repository.getMovieDetails(movieId)
         }
     }
 
     fun getMovieReviews(movieId: Int) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val response = repository.getMovieReviews(movieId)
             _reviews.value = response.results
         }
     }
 
     fun searchMovies(query: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val response = repository.searchMovies(query)
             _movies.value = response.results
         }
     }
 
     fun getSimilarMovies(movieId: Int) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val response = repository.getSimilarMovies(movieId)
             _movies.value = response.results
         }
     }
 
     fun registerUser(userId: String, password: String, preferredName: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val user = User(userId, password, preferredName)
             repository.registerUser(user)
         }
     }
 
     fun loginUser(userId: String, password: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val user = repository.loginUser(userId, password)
             _currentUser.value = user
             if (user != null) {
@@ -103,13 +104,13 @@ class MovieViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun getFavoriteMovies(userId: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             _favoriteMovies.value = repository.getFavoriteMovies(userId)
         }
     }
 
     fun addFavoriteMovie(movie: Movie) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val userId = currentUser.value?.userId ?: return@launch
             val favoriteMovie = FavoriteMovie(movie.id, userId, movie.title, movie.posterPath)
             repository.addFavoriteMovie(favoriteMovie)
@@ -118,7 +119,7 @@ class MovieViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun removeFavoriteMovie(movieId: Int) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val userId = currentUser.value?.userId ?: return@launch
             val favoriteMovie = _favoriteMovies.value.find { it.movieId == movieId } ?: return@launch
             repository.removeFavoriteMovie(favoriteMovie)
