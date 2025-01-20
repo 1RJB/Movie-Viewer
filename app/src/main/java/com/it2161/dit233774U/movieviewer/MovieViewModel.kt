@@ -3,127 +3,142 @@ package com.it2161.dit233774U.movieviewer
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class MovieViewModel(application: Application) : AndroidViewModel(application) {
-    private val repository = Repository(application)
 
-    private val _movies = MutableStateFlow<List<Movie>>(emptyList())
-    val movies: StateFlow<List<Movie>> = _movies
+    private val repository = Repository(application.applicationContext)
 
-    private val _movieDetails = MutableStateFlow<Movie?>(null)
-    val movieDetails: StateFlow<Movie?> = _movieDetails
-
-    private val _reviews = MutableStateFlow<List<Review>>(emptyList())
-    val reviews: StateFlow<List<Review>> = _reviews
-
-    private val _favoriteMovies = MutableStateFlow<List<FavoriteMovie>>(emptyList())
-    val favoriteMovies: StateFlow<List<FavoriteMovie>> = _favoriteMovies
-
+    // Keep track of currently logged-in user
     private val _currentUser = MutableStateFlow<User?>(null)
-    val currentUser: StateFlow<User?> = _currentUser
+    val currentUser: StateFlow<User?> get() = _currentUser
 
-    fun getPopularMovies() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val response = repository.getPopularMovies()
-            _movies.value = response.results
-        }
-    }
+    // Movies displayed on the MovieListScreen
+    private val _movies = MutableStateFlow<List<Movie>>(emptyList())
+    val movies: StateFlow<List<Movie>> get() = _movies
 
-    fun getTopRatedMovies() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val response = repository.getTopRatedMovies()
-            _movies.value = response.results
-        }
-    }
+    // Detailed info for the selected movie
+    private val _movieDetails = MutableStateFlow<Movie?>(null)
+    val movieDetails: StateFlow<Movie?> get() = _movieDetails
 
-    fun getNowPlayingMovies() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val response = repository.getNowPlayingMovies()
-            _movies.value = response.results
-        }
-    }
+    // Movie reviews
+    private val _reviews = MutableStateFlow<List<Review>>(emptyList())
+    val reviews: StateFlow<List<Review>> get() = _reviews
 
-    fun getUpcomingMovies() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val response = repository.getUpcomingMovies()
-            _movies.value = response.results
-        }
-    }
+    // Search results
+    private val _searchResults = MutableStateFlow<List<Movie>>(emptyList())
+    val searchResults: StateFlow<List<Movie>> get() = _searchResults
 
-    fun getMovieDetails(movieId: Int) {
-        viewModelScope.launch(Dispatchers.IO) {
-            _movieDetails.value = repository.getMovieDetails(movieId)
-        }
-    }
+    // Favorite movies
+    private val _favoriteMovies = MutableStateFlow<List<FavoriteMovie>>(emptyList())
+    val favoriteMovies: StateFlow<List<FavoriteMovie>> get() = _favoriteMovies
 
-    fun getMovieReviews(movieId: Int) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val response = repository.getMovieReviews(movieId)
-            _reviews.value = response.results
-        }
-    }
-
-    fun searchMovies(query: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val response = repository.searchMovies(query)
-            _movies.value = response.results
-        }
-    }
-
-    fun getSimilarMovies(movieId: Int) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val response = repository.getSimilarMovies(movieId)
-            _movies.value = response.results
-        }
-    }
-
+    // ------------------- Authentication ------------------- //
     fun registerUser(userId: String, password: String, preferredName: String) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             val user = User(userId, password, preferredName)
             repository.registerUser(user)
         }
     }
 
     fun loginUser(userId: String, password: String) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             val user = repository.loginUser(userId, password)
             _currentUser.value = user
-            if (user != null) {
-                getFavoriteMovies(user.userId)
+        }
+    }
+
+    // ------------------- Movie Lists ------------------- //
+    fun getPopularMovies() {
+        viewModelScope.launch {
+            val response = repository.getPopularMovies()
+            _movies.value = response.results
+        }
+    }
+
+    fun getTopRatedMovies() {
+        viewModelScope.launch {
+            val response = repository.getTopRatedMovies()
+            _movies.value = response.results
+        }
+    }
+
+    fun getNowPlayingMovies() {
+        viewModelScope.launch {
+            val response = repository.getNowPlayingMovies()
+            _movies.value = response.results
+        }
+    }
+
+    fun getUpcomingMovies() {
+        viewModelScope.launch {
+            val response = repository.getUpcomingMovies()
+            _movies.value = response.results
+        }
+    }
+
+    // ------------------- Movie Details ------------------- //
+    fun getMovieDetails(movieId: Int) {
+        viewModelScope.launch {
+            val movie = repository.getMovieDetails(movieId)
+            _movieDetails.value = movie
+        }
+    }
+
+    fun getMovieReviews(movieId: Int) {
+        viewModelScope.launch {
+            val reviewResponse = repository.getMovieReviews(movieId)
+            _reviews.value = reviewResponse.results
+        }
+    }
+
+    // ------------------- Similar Movies (Optional usage) ------------------- //
+    fun getSimilarMovies(movieId: Int) {
+        viewModelScope.launch {
+            val response = repository.getSimilarMovies(movieId)
+            _movies.value = response.results
+        }
+    }
+
+    // ------------------- Search ------------------- //
+    fun searchMovies(query: String) {
+        viewModelScope.launch {
+            val response = repository.searchMovies(query)
+            _searchResults.value = response.results
+        }
+    }
+
+    // ------------------- Favorites ------------------- //
+    fun loadFavoriteMovies() {
+        viewModelScope.launch {
+            currentUser.value?.let { user ->
+                val favs = repository.getFavoriteMovies(user.userId)
+                _favoriteMovies.value = favs
             }
         }
     }
 
-    fun logout() {
-        _currentUser.value = null
-        _favoriteMovies.value = emptyList()
-    }
-
-    fun getFavoriteMovies(userId: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            _favoriteMovies.value = repository.getFavoriteMovies(userId)
-        }
-    }
-
     fun addFavoriteMovie(movie: Movie) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val userId = currentUser.value?.userId ?: return@launch
-            val favoriteMovie = FavoriteMovie(movie.id, userId, movie.title, movie.posterPath)
-            repository.addFavoriteMovie(favoriteMovie)
-            getFavoriteMovies(userId)
+        viewModelScope.launch {
+            currentUser.value?.let { user ->
+                val favoriteMovie = FavoriteMovie(
+                    movieId = movie.id,
+                    userId = user.userId,
+                    title = movie.title,
+                    posterPath = movie.posterPath
+                )
+                repository.addFavoriteMovie(favoriteMovie)
+                loadFavoriteMovies()
+            }
         }
     }
 
-    fun removeFavoriteMovie(movieId: Int) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val userId = currentUser.value?.userId ?: return@launch
-            val favoriteMovie = _favoriteMovies.value.find { it.movieId == movieId } ?: return@launch
+    fun removeFavoriteMovie(favoriteMovie: FavoriteMovie) {
+        viewModelScope.launch {
             repository.removeFavoriteMovie(favoriteMovie)
-            getFavoriteMovies(userId)
+            loadFavoriteMovies()
         }
     }
 }

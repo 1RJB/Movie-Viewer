@@ -17,6 +17,14 @@ import coil.compose.AsyncImage
 fun LoginScreen(viewModel: MovieViewModel, navController: NavController) {
     var userId by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf("") }
+    val currentUser by viewModel.currentUser.collectAsState()
+
+    LaunchedEffect(currentUser) {
+        if (currentUser != null) {
+            navController.navigate("movieList")
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -42,8 +50,11 @@ fun LoginScreen(viewModel: MovieViewModel, navController: NavController) {
         Spacer(modifier = Modifier.height(16.dp))
         Button(
             onClick = {
-                viewModel.loginUser(userId, password)
-                navController.navigate("movieList")
+                if (userId.isNotEmpty() && password.isNotEmpty()) {
+                    viewModel.loginUser(userId, password)
+                } else {
+                    errorMessage = "Please enter both User ID and Password"
+                }
             },
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -55,6 +66,9 @@ fun LoginScreen(viewModel: MovieViewModel, navController: NavController) {
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Register")
+        }
+        if (errorMessage.isNotEmpty()) {
+            Text(errorMessage, color = MaterialTheme.colorScheme.error)
         }
     }
 }
@@ -111,7 +125,17 @@ fun MovieListScreen(viewModel: MovieViewModel, navController: NavController) {
     val movies by viewModel.movies.collectAsState()
     var selectedCategory by remember { mutableStateOf("Popular") }
 
+    LaunchedEffect(selectedCategory) {
+        when (selectedCategory) {
+            "Popular" -> viewModel.getPopularMovies()
+            "Top Rated" -> viewModel.getTopRatedMovies()
+            "Now Playing" -> viewModel.getNowPlayingMovies()
+            "Upcoming" -> viewModel.getUpcomingMovies()
+        }
+    }
+
     Column {
+        // Category Toggle
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -120,22 +144,20 @@ fun MovieListScreen(viewModel: MovieViewModel, navController: NavController) {
         ) {
             Text("Popular", modifier = Modifier.clickable {
                 selectedCategory = "Popular"
-                viewModel.getPopularMovies()
             })
             Text("Top Rated", modifier = Modifier.clickable {
                 selectedCategory = "Top Rated"
-                viewModel.getTopRatedMovies()
             })
             Text("Now Playing", modifier = Modifier.clickable {
                 selectedCategory = "Now Playing"
-                viewModel.getNowPlayingMovies()
             })
             Text("Upcoming", modifier = Modifier.clickable {
                 selectedCategory = "Upcoming"
-                viewModel.getUpcomingMovies()
             })
         }
-        LazyColumn {
+
+        // Display Movies
+        LazyColumn(modifier = Modifier.padding(top = 56.dp)) { // Added padding to move down from status bar
             items(movies) { movie ->
                 MovieItem(movie) {
                     navController.navigate("movieDetail/${movie.id}")
@@ -196,80 +218,24 @@ fun MovieDetailScreen(viewModel: MovieViewModel, movieId: Int) {
                     ReviewItem(review)
                 }
             }
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = {
+                    // Add to favorites
+                    viewModel.addFavoriteMovie(movie)
+                }
+            ) {
+                Text("Add to Favorites")
+            }
         }
     }
 }
 
 @Composable
 fun ReviewItem(review: Review) {
-    Column(modifier = Modifier.padding(vertical = 8.dp)) {
-        Text(review.author, style = MaterialTheme.typography.titleMedium)
-        Text(review.content)
-    }
-}
-
-@Composable
-fun ProfileScreen(viewModel: MovieViewModel, navController: NavController) {
-    val currentUser by viewModel.currentUser.collectAsState()
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        currentUser?.let { user ->
-            Text("User ID: ${user.userId}")
-            Text("Preferred Name: ${user.preferredName}")
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(
-            onClick = {
-                viewModel.logout()
-                navController.navigate("login")
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Logout")
-        }
-    }
-}
-
-@Composable
-fun FavoriteMoviesScreen(viewModel: MovieViewModel, navController: NavController) {
-    val favoriteMovies by viewModel.favoriteMovies.collectAsState()
-
-    LazyColumn {
-        items(favoriteMovies) { movie ->
-            MovieItem(Movie(movie.movieId, movie.title, "", movie.posterPath, "", 0.0, false, emptyList(), "", 0, 0, 0)) {
-                navController.navigate("movieDetail/${movie.movieId}")
-            }
-        }
-    }
-}
-
-@Composable
-fun SearchScreen(viewModel: MovieViewModel, navController: NavController) {
-    var query by remember { mutableStateOf("") }
-    val movies by viewModel.movies.collectAsState()
-
-    Column {
-        TextField(
-            value = query,
-            onValueChange = {
-                query = it
-                viewModel.searchMovies(it)
-            },
-            label = { Text("Search Movies") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        LazyColumn {
-            items(movies) { movie ->
-                MovieItem(movie) {
-                    navController.navigate("movieDetail/${movie.id}")
-                }
-            }
-        }
+    Column(modifier = Modifier.padding(8.dp)) {
+        Text(text = "Author: ${review.author}", style = MaterialTheme.typography.bodyMedium)
+        Text(text = review.content, style = MaterialTheme.typography.bodySmall)
+        Divider(modifier = Modifier.padding(vertical = 8.dp))
     }
 }

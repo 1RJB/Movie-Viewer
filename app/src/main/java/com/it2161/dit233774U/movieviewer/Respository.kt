@@ -12,6 +12,9 @@ class Repository(context: Context) {
     private val userDao: UserDao = database.userDao()
     private val favoriteMovieDao: FavoriteMovieDao = database.favoriteMovieDao()
 
+    // Replace with your valid TMDB API key
+    private val apiKey = "531a735640057af99e002f9185093005"
+
     init {
         val retrofit = Retrofit.Builder()
             .baseUrl("https://api.themoviedb.org/3/")
@@ -21,8 +24,7 @@ class Repository(context: Context) {
         apiService = retrofit.create(ApiService::class.java)
     }
 
-    private val apiKey = "531a735640057af99e002f9185093005"
-
+    // ------------------- TMDB Data Fetching ------------------- //
     suspend fun getPopularMovies() = apiService.getPopularMovies(apiKey)
     suspend fun getTopRatedMovies() = apiService.getTopRatedMovies(apiKey)
     suspend fun getNowPlayingMovies() = apiService.getNowPlayingMovies(apiKey)
@@ -32,6 +34,7 @@ class Repository(context: Context) {
     suspend fun searchMovies(query: String) = apiService.searchMovies(apiKey, query)
     suspend fun getSimilarMovies(movieId: Int) = apiService.getSimilarMovies(movieId, apiKey)
 
+    // ------------------- User Auth ------------------- //
     suspend fun registerUser(user: User) = withContext(Dispatchers.IO) {
         userDao.insertUser(user)
     }
@@ -41,6 +44,7 @@ class Repository(context: Context) {
         if (user?.password == password) user else null
     }
 
+    // ------------------- Favorites ------------------- //
     suspend fun getFavoriteMovies(userId: String) = withContext(Dispatchers.IO) {
         favoriteMovieDao.getFavoriteMovies(userId)
     }
