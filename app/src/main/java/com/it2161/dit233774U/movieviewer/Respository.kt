@@ -11,10 +11,9 @@ class Repository(context: Context) {
     private val database: AppDatabase = AppDatabase.getDatabase(context)
     private val userDao: UserDao = database.userDao()
     private val favoriteMovieDao: FavoriteMovieDao = database.favoriteMovieDao()
+    private val movieDao: MovieDao = database.movieDao()
 
-    // Replace with your valid TMDB API key
-    private val apiKey = "531a735640057af99e002f9185093005"
-
+    // Use Retrofit to build the service for The Movie DB
     init {
         val retrofit = Retrofit.Builder()
             .baseUrl("https://api.themoviedb.org/3/")
@@ -24,7 +23,10 @@ class Repository(context: Context) {
         apiService = retrofit.create(ApiService::class.java)
     }
 
-    // ------------------- TMDB Data Fetching ------------------- //
+    // Replace with a valid API key from The Movie DB
+    private val apiKey = "531a735640057af99e002f9185093005"
+
+    // ------------------- Movie API methods ------------------- //
     suspend fun getPopularMovies() = apiService.getPopularMovies(apiKey)
     suspend fun getTopRatedMovies() = apiService.getTopRatedMovies(apiKey)
     suspend fun getNowPlayingMovies() = apiService.getNowPlayingMovies(apiKey)
@@ -34,7 +36,7 @@ class Repository(context: Context) {
     suspend fun searchMovies(query: String) = apiService.searchMovies(apiKey, query)
     suspend fun getSimilarMovies(movieId: Int) = apiService.getSimilarMovies(movieId, apiKey)
 
-    // ------------------- User Auth ------------------- //
+    // ------------------- User Auth methods ------------------- //
     suspend fun registerUser(user: User) = withContext(Dispatchers.IO) {
         userDao.insertUser(user)
     }
@@ -44,8 +46,8 @@ class Repository(context: Context) {
         if (user?.password == password) user else null
     }
 
-    // ------------------- Favorites ------------------- //
-    suspend fun getFavoriteMovies(userId: String) = withContext(Dispatchers.IO) {
+    // ------------------- Favorite Movies ------------------- //
+    suspend fun getFavoriteMovies(userId: String): List<FavoriteMovie> = withContext(Dispatchers.IO) {
         favoriteMovieDao.getFavoriteMovies(userId)
     }
 
@@ -56,4 +58,22 @@ class Repository(context: Context) {
     suspend fun removeFavoriteMovie(favoriteMovie: FavoriteMovie) = withContext(Dispatchers.IO) {
         favoriteMovieDao.deleteFavoriteMovie(favoriteMovie)
     }
+
+    // ------------------- Caching ------------------- //
+    suspend fun cacheMovies(movies: List<Movie>) = withContext(Dispatchers.IO) {
+        movieDao.insertMovies(movies)
+    }
+
+    suspend fun getCachedMovies(): List<Movie> = withContext(Dispatchers.IO) {
+        movieDao.getAllMovies()
+    }
+
+    suspend fun getCachedMovieDetails(movieId: Int): Movie? = withContext(Dispatchers.IO) {
+        movieDao.getMovieById(movieId)
+    }
+
+    suspend fun searchCachedMovies(query: String): List<Movie> = withContext(Dispatchers.IO) {
+        movieDao.searchMovies("%$query%")
+    }
 }
+

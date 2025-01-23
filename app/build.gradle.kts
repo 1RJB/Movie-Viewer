@@ -76,4 +76,7 @@ dependencies {
 
     // ViewModel
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
+
+    // Gson (for TypeConverter)
+    implementation("com.google.code.gson:gson:2.10.1")
 }

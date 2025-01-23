@@ -1,19 +1,14 @@
 package com.it2161.dit233774U.movieviewer
 
 import android.content.Context
-import androidx.room.Dao
-import androidx.room.Database
-import androidx.room.Delete
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
-import androidx.room.Room
-import androidx.room.RoomDatabase
+import androidx.room.*
 
-@Database(entities = [User::class, FavoriteMovie::class], version = 1, exportSchema = false)
+@Database(entities = [User::class, FavoriteMovie::class, Movie::class], version = 1, exportSchema = false)
+@TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun favoriteMovieDao(): FavoriteMovieDao
+    abstract fun movieDao(): MovieDao
 
     companion object {
         @Volatile
@@ -53,3 +48,19 @@ interface FavoriteMovieDao {
     @Delete
     suspend fun deleteFavoriteMovie(favoriteMovie: FavoriteMovie)
 }
+
+@Dao
+interface MovieDao {
+    @Query("SELECT * FROM movies")
+    suspend fun getAllMovies(): List<Movie>
+
+    @Query("SELECT * FROM movies WHERE id = :movieId")
+    suspend fun getMovieById(movieId: Int): Movie?
+
+    @Query("SELECT * FROM movies WHERE title LIKE :query")
+    suspend fun searchMovies(query: String): List<Movie>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertMovies(movies: List<Movie>)
+}
+

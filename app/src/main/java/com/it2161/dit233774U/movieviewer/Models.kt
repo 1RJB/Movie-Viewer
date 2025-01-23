@@ -2,9 +2,13 @@ package com.it2161.dit233774U.movieviewer
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.TypeConverter
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 
+@Entity(tableName = "movies")
 data class Movie(
-    val id: Int,
+    @PrimaryKey val id: Int,
     val title: String,
     val overview: String,
     val posterPath: String,
@@ -44,3 +48,20 @@ data class FavoriteMovie(
     val title: String,
     val posterPath: String
 )
+
+class Converters {
+    @TypeConverter
+    fun fromGenreList(value: List<Genre>): String {
+        val gson = Gson()
+        val type = object : TypeToken<List<Genre>>() {}.type
+        return gson.toJson(value, type)
+    }
+
+    @TypeConverter
+    fun toGenreList(value: String): List<Genre> {
+        val gson = Gson()
+        val type = object : TypeToken<List<Genre>>() {}.type
+        return gson.fromJson(value, type)
+    }
+}
+
