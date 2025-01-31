@@ -47,6 +47,9 @@ interface FavoriteMovieDao {
 
     @Delete
     suspend fun deleteFavoriteMovie(favoriteMovie: FavoriteMovie)
+
+    @Query("SELECT COUNT(*) FROM favorite_movies WHERE userId = :userId AND movieId = :movieId")
+    suspend fun isFavoriteMovie(userId: String, movieId: Int): Int
 }
 
 @Dao
