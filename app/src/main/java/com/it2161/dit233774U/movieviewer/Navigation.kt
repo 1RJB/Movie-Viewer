@@ -26,7 +26,7 @@ fun Navigation(viewModel: MovieViewModel) {
             arguments = listOf(navArgument("movieId") { type = NavType.IntType })
         ) { backStackEntry ->
             val movieId = backStackEntry.arguments?.getInt("movieId") ?: 0
-            MovieDetailScreen(viewModel, movieId)
+            MovieDetailScreen(viewModel, movieId, navController)
         }
         composable("profile") {
             ProfileScreen(viewModel, navController)
