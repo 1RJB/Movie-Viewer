@@ -205,7 +205,7 @@ class MovieViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.IO) {
             val userId = currentUser.value?.userId ?: return@launch
             val favoriteMovie = FavoriteMovie(movie.id, userId, movie.title,
-                movie.posterPath.toString()
+                movie.poster_path.toString()
             )
             repository.addFavoriteMovie(favoriteMovie)
             _isFavorite.value = true
