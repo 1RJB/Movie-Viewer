@@ -10,16 +10,16 @@ import com.google.gson.reflect.TypeToken
 data class Movie(
     @PrimaryKey val id: Int,
     val title: String,
-    val overview: String,
-    val posterPath: String,
-    val releaseDate: String,
-    val voteAverage: Double,
-    val adult: Boolean,
-    val genres: List<Genre>,
-    val originalLanguage: String,
-    val runtime: Int,
-    val voteCount: Int,
-    val revenue: Long
+    val overview: String?,
+    val posterPath: String?,
+    val releaseDate: String?,
+    val voteAverage: Double?,
+    val adult: Boolean?,
+    val genreIds: List<Int>?,
+    val originalLanguage: String?,
+    val runtime: Int?,
+    val voteCount: Int?,
+    val revenue: Long?
 )
 
 data class Genre(
@@ -51,17 +51,16 @@ data class FavoriteMovie(
 
 class Converters {
     @TypeConverter
-    fun fromGenreList(value: List<Genre>): String {
-        val gson = Gson()
-        val type = object : TypeToken<List<Genre>>() {}.type
-        return gson.toJson(value, type)
+    fun fromIntList(value: List<Int>?): String? {
+        if (value == null) return null
+        return value.joinToString(",")
     }
 
     @TypeConverter
-    fun toGenreList(value: String): List<Genre> {
-        val gson = Gson()
-        val type = object : TypeToken<List<Genre>>() {}.type
-        return gson.fromJson(value, type)
+    fun toIntList(value: String?): List<Int>? {
+        if (value == null) return null
+        if (value.isEmpty()) return emptyList()
+        return value.split(",").map { it.toInt() }
     }
 }
 
