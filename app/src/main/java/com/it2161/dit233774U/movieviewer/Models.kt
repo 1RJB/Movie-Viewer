@@ -3,6 +3,7 @@ package com.it2161.dit233774U.movieviewer
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverter
+import androidx.room.TypeConverters
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
@@ -11,19 +12,19 @@ data class Movie(
     @PrimaryKey val id: Int,
     val title: String,
     val overview: String?,
-    val posterPath: String?,
+    val poster_path: String?,
     val releaseDate: String?,
-    val voteAverage: Double?,
+    val vote_average: Double?,
     val adult: Boolean?,
-    val genreIds: List<Int>?,
-    val originalLanguage: String?,
+    @TypeConverters(Converters::class) val genres: List<Genre>?,
+    val original_language: String?,
     val runtime: Int?,
-    val voteCount: Int?,
+    val vote_count: Int?,
     val revenue: Long?
 )
 
 data class Genre(
-    val id: Int,
+    val id: Int = 0,
     val name: String
 )
 
@@ -46,7 +47,7 @@ data class FavoriteMovie(
     @PrimaryKey val movieId: Int,
     val userId: String,
     val title: String,
-    val posterPath: String
+    val poster_path: String
 )
 
 class Converters {
@@ -62,5 +63,17 @@ class Converters {
         if (value.isEmpty()) return emptyList()
         return value.split(",").map { it.toInt() }
     }
-}
 
+    @TypeConverter
+    fun fromGenreList(genres: List<Genre>?): String? {
+        if (genres == null) return null
+        return Gson().toJson(genres)
+    }
+
+    @TypeConverter
+    fun toGenreList(value: String?): List<Genre>? {
+        if (value == null) return null
+        val listType = object : TypeToken<List<Genre>>() {}.type
+        return Gson().fromJson(value, listType)
+    }
+}
