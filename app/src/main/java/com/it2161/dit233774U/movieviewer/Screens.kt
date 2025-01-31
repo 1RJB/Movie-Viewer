@@ -33,13 +33,22 @@ fun LoginScreen(viewModel: MovieViewModel, navController: NavController) {
         }
     }
 
+    // Use MaterialTheme spacing, alignment, and coloring for a more balanced layout
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(16.dp),   // Adequate padding for balance
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // Align text fields for a balanced look
+        Text(
+            text = "Login",
+            style = MaterialTheme.typography.titleLarge,  // Highlight the main screen heading
+            color = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
         TextField(
             value = userId,
             onValueChange = { userId = it },
@@ -47,6 +56,7 @@ fun LoginScreen(viewModel: MovieViewModel, navController: NavController) {
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
+
         TextField(
             value = password,
             onValueChange = { password = it },
@@ -55,20 +65,31 @@ fun LoginScreen(viewModel: MovieViewModel, navController: NavController) {
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(16.dp))
+
+        // Primary action - visually prominent
         Button(
-            onClick = {
-                viewModel.loginUser(userId, password)
-            },
+            onClick = { viewModel.loginUser(userId, password) },
             modifier = Modifier.fillMaxWidth(),
-            enabled = !isOffline
+            enabled = !isOffline,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary
+            )
         ) {
-            Text("Login")
+            Text("Login", color = MaterialTheme.colorScheme.onPrimary)
         }
+
+        // Show feedback for error
         loginError?.let {
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = it, color = MaterialTheme.colorScheme.error)
+            Text(
+                text = it,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.error
+            )
         }
         Spacer(modifier = Modifier.height(8.dp))
+
+        // Secondary action - less prominent
         TextButton(
             onClick = { navController.navigate("register") },
             modifier = Modifier.fillMaxWidth(),
@@ -76,8 +97,12 @@ fun LoginScreen(viewModel: MovieViewModel, navController: NavController) {
         ) {
             Text("Register")
         }
+
         if (isOffline) {
-            Text("Offline mode: Login and registration are unavailable", color = MaterialTheme.colorScheme.error)
+            Text(
+                "Offline mode: Login and registration are unavailable",
+                color = MaterialTheme.colorScheme.error
+            )
         }
     }
 }
