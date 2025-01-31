@@ -61,19 +61,6 @@ data class FavoriteMovie(
 
 class Converters {
     @TypeConverter
-    fun fromIntList(value: List<Int>?): String? {
-        if (value == null) return null
-        return value.joinToString(",")
-    }
-
-    @TypeConverter
-    fun toIntList(value: String?): List<Int>? {
-        if (value == null) return null
-        if (value.isEmpty()) return emptyList()
-        return value.split(",").map { it.toInt() }
-    }
-
-    @TypeConverter
     fun fromGenreList(genres: List<Genre>?): String? {
         if (genres == null) return null
         return Gson().toJson(genres)
