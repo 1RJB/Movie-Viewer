@@ -3,7 +3,13 @@ package com.it2161.dit233774U.movieviewer
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -129,6 +135,7 @@ fun RegisterScreen(viewModel: MovieViewModel, navController: NavController) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MovieListScreen(viewModel: MovieViewModel, navController: NavController) {
     val movies by viewModel.movies.collectAsState()
@@ -146,38 +153,54 @@ fun MovieListScreen(viewModel: MovieViewModel, navController: NavController) {
         }
     }
 
-    Column {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            CategoryButton("Popular", selectedCategory) { selectedCategory = "Popular" }
-            CategoryButton("Top Rated", selectedCategory) { selectedCategory = "Top Rated" }
-            CategoryButton("Now Playing", selectedCategory) { selectedCategory = "Now Playing" }
-            CategoryButton("Upcoming", selectedCategory) { selectedCategory = "Upcoming" }
-        }
-        if (isOffline) {
-            Text("Offline mode: Showing cached movies", modifier = Modifier.padding(16.dp), color = MaterialTheme.colorScheme.error)
-        }
-        when {
-            isLoading -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Movies") },
+                actions = {
+                    IconButton(onClick = { navController.navigate("profile") }) {
+                        Icon(Icons.Default.AccountCircle, contentDescription = "Profile")
+                    }
+                    IconButton(onClick = { navController.navigate("search") }) {
+                        Icon(Icons.Default.Search, contentDescription = "Search")
+                    }
                 }
+            )
+        }
+    ) { innerPadding ->
+        Column(modifier = Modifier.padding(innerPadding)) {
+            LazyRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                item { CategoryButton("Popular", selectedCategory) { selectedCategory = "Popular" } }
+                item { CategoryButton("Top Rated", selectedCategory) { selectedCategory = "Top Rated" } }
+                item { CategoryButton("Now Playing", selectedCategory) { selectedCategory = "Now Playing" } }
+                item { CategoryButton("Upcoming", selectedCategory) { selectedCategory = "Upcoming" } }
             }
-            error != null -> {
-                Text(error!!, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
+            if (isOffline) {
+                Text("Offline mode: Showing cached movies", modifier = Modifier.padding(16.dp), color = MaterialTheme.colorScheme.error)
             }
-            movies.isEmpty() -> {
-                Text("No movies found", modifier = Modifier.padding(16.dp))
-            }
-            else -> {
-                LazyColumn {
-                    items(movies) { movie ->
-                        MovieItem(movie) {
-                            navController.navigate("movieDetail/${movie.id}")
+            when {
+                isLoading -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
+                error != null -> {
+                    Text(error!!, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
+                }
+                movies.isEmpty() -> {
+                    Text("No movies found", modifier = Modifier.padding(16.dp))
+                }
+                else -> {
+                    LazyColumn {
+                        items(movies) { movie ->
+                            MovieItem(movie) {
+                                navController.navigate("movieDetail/${movie.id}")
+                            }
                         }
                     }
                 }
@@ -199,19 +222,28 @@ fun CategoryButton(category: String, selectedCategory: String, onClick: () -> Un
 }
 
 @Composable
-fun MovieDetailScreen(viewModel: MovieViewModel, movieId: Int) {
+fun MovieDetailScreen(viewModel: MovieViewModel, movieId: Int, navController: NavController) {
     val movieDetails by viewModel.movieDetails.collectAsState()
     val reviews by viewModel.reviews.collectAsState()
+    val similarMovies by viewModel.similarMovies.collectAsState()
     val isOffline by viewModel.isOffline.collectAsState()
+    val isFavorite by viewModel.isFavorite.collectAsState()
 
     LaunchedEffect(movieId) {
         viewModel.getMovieDetails(movieId)
         if (!isOffline) {
             viewModel.getMovieReviews(movieId)
+            viewModel.getSimilarMovies(movieId)
         }
+        viewModel.checkIfFavorite(movieId)
     }
 
-    Column(modifier = Modifier.padding(16.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState())
+    ) {
         movieDetails?.let { movie ->
             AsyncImage(
                 model = movie.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" },
@@ -221,31 +253,56 @@ fun MovieDetailScreen(viewModel: MovieViewModel, movieId: Int) {
                     .height(300.dp)
             )
             Text(text = movie.title, style = MaterialTheme.typography.headlineMedium)
-            movie.releaseDate?.let { Text(text = "Release Date: $it") }
-            movie.vote_average?.let { Text(text = "Rating: $it") }
-            movie.overview?.let { Text(text = "Overview: $it") }
-            movie.adult?.let { Text(text = "Adult: ${if (it) "Yes" else "No"}") }
-            movie.original_language?.let { Text(text = "Original Language: $it") }
+            movie.release_date?.let { Text(text = "Release Date: $it") }
+            movie.vote_average?.let { Text(text = "Vote Average: $it") }
+            movie.adult?.let { Text(text = "Adult: $it") }
             movie.runtime?.let { Text(text = "Runtime: $it minutes") }
             movie.vote_count?.let { Text(text = "Vote Count: $it") }
             movie.revenue?.let { Text(text = "Revenue: $it") }
+            movie.overview?.let { Text(text = "Overview: $it") }
             movie.genres?.let { genres ->
                 Text(text = "Genres: ${genres.joinToString { it.name }}")
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = {
+                    if (isFavorite) {
+                        viewModel.removeFavoriteMovie(movie.id)
+                    } else {
+                        viewModel.addFavoriteMovie(movie)
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(if (isFavorite) "Remove from Favorites" else "Add to Favorites")
             }
 
             if (!isOffline) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text("Reviews", style = MaterialTheme.typography.titleLarge)
-                LazyColumn {
-                    items(reviews) { review ->
+                // Use a Column instead of LazyColumn
+                Column {
+                    reviews.forEach { review ->
                         ReviewItem(review)
                     }
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("Similar Movies", style = MaterialTheme.typography.titleLarge)
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(similarMovies) { similarMovie ->
+                        MovieItem(similarMovie) {
+                            navController.navigate("movieDetail/${similarMovie.id}")
+                        }
+                    }
+                }
             } else {
-                Text("Reviews unavailable in offline mode", color = MaterialTheme.colorScheme.error)
+                Text("Reviews and similar movies unavailable in offline mode", color = MaterialTheme.colorScheme.error)
             }
-        } ?: run {
-            Text("Loading...", style = MaterialTheme.typography.headlineMedium)
         }
     }
 }
@@ -326,15 +383,15 @@ fun FavoriteMoviesScreen(viewModel: MovieViewModel, navController: NavController
                         id = movie.movieId,
                         title = movie.title,
                         poster_path = movie.poster_path,
-                        releaseDate = null,
-                        vote_average = null,
-                        overview = null,
-                        adult = null,
-                        genres = null,
-                        original_language = null,
-                        runtime = null,
-                        vote_count = null,
-                        revenue = null
+                        release_date = movie.release_date,
+                        vote_average = movie.vote_average,
+                        overview = movie.overview,
+                        adult = movie.adult,
+                        genres = movie.genres,
+                        original_language = movie.original_language,
+                        runtime = movie.runtime,
+                        vote_count = movie.vote_count,
+                        revenue = movie.revenue
                     )
                 ) {
                     navController.navigate("movieDetail/${movie.movieId}")
@@ -406,10 +463,10 @@ fun MovieItem(movie: Movie, onClick: () -> Unit) {
         Column {
             Text(text = movie.title, style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(4.dp))
-            Text(text = movie.releaseDate ?: "Release date unknown", style = MaterialTheme.typography.bodyMedium)
+            Text(text = movie.release_date ?: "Release date unknown", style = MaterialTheme.typography.bodyMedium)
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Rating: ${movie.vote_average?.toString() ?: "N/A"}",
+                text = "Vote Average: ${movie.vote_average?.toString() ?: "N/A"}",
                 style = MaterialTheme.typography.bodySmall
             )
         }
