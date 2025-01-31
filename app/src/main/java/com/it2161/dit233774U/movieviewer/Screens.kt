@@ -214,7 +214,7 @@ fun MovieDetailScreen(viewModel: MovieViewModel, movieId: Int) {
     Column(modifier = Modifier.padding(16.dp)) {
         movieDetails?.let { movie ->
             AsyncImage(
-                model = movie.posterPath?.let { "https://image.tmdb.org/t/p/w500$it" },
+                model = movie.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" },
                 contentDescription = movie.title,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -222,10 +222,15 @@ fun MovieDetailScreen(viewModel: MovieViewModel, movieId: Int) {
             )
             Text(text = movie.title, style = MaterialTheme.typography.headlineMedium)
             movie.releaseDate?.let { Text(text = "Release Date: $it") }
-            movie.voteAverage?.let { Text(text = "Rating: $it") }
+            movie.vote_average?.let { Text(text = "Rating: $it") }
             movie.overview?.let { Text(text = "Overview: $it") }
-            movie.genreIds?.let { ids ->
-                Text(text = "Genre IDs: ${ids.joinToString()}")
+            movie.adult?.let { Text(text = "Adult: ${if (it) "Yes" else "No"}") }
+            movie.original_language?.let { Text(text = "Original Language: $it") }
+            movie.runtime?.let { Text(text = "Runtime: $it minutes") }
+            movie.vote_count?.let { Text(text = "Vote Count: $it") }
+            movie.revenue?.let { Text(text = "Revenue: $it") }
+            movie.genres?.let { genres ->
+                Text(text = "Genres: ${genres.joinToString { it.name }}")
             }
 
             if (!isOffline) {
@@ -239,6 +244,8 @@ fun MovieDetailScreen(viewModel: MovieViewModel, movieId: Int) {
             } else {
                 Text("Reviews unavailable in offline mode", color = MaterialTheme.colorScheme.error)
             }
+        } ?: run {
+            Text("Loading...", style = MaterialTheme.typography.headlineMedium)
         }
     }
 }
@@ -318,15 +325,15 @@ fun FavoriteMoviesScreen(viewModel: MovieViewModel, navController: NavController
                     Movie(
                         id = movie.movieId,
                         title = movie.title,
-                        posterPath = movie.posterPath,
+                        poster_path = movie.poster_path,
                         releaseDate = null,
-                        voteAverage = null,
+                        vote_average = null,
                         overview = null,
                         adult = null,
-                        genreIds = null,
-                        originalLanguage = null,
+                        genres = null,
+                        original_language = null,
                         runtime = null,
-                        voteCount = null,
+                        vote_count = null,
                         revenue = null
                     )
                 ) {
@@ -383,8 +390,15 @@ fun MovieItem(movie: Movie, onClick: () -> Unit) {
             .clickable(onClick = onClick)
             .padding(16.dp)
     ) {
+        // Construct the full image URL
+        val imageUrl = if (movie.poster_path != null) {
+            "https://image.tmdb.org/t/p/w500/${movie.poster_path}"
+        } else {
+            R.drawable.placeholder  // Use placeholder if posterPath is null
+        }
+
         AsyncImage(
-            model = movie.posterPath?.let { "https://image.tmdb.org/t/p/w185$it" } ?: R.drawable.placeholder,
+            model = imageUrl,
             contentDescription = movie.title,
             modifier = Modifier.size(100.dp)
         )
@@ -395,7 +409,7 @@ fun MovieItem(movie: Movie, onClick: () -> Unit) {
             Text(text = movie.releaseDate ?: "Release date unknown", style = MaterialTheme.typography.bodyMedium)
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Rating: ${movie.voteAverage?.toString() ?: "N/A"}",
+                text = "Rating: ${movie.vote_average?.toString() ?: "N/A"}",
                 style = MaterialTheme.typography.bodySmall
             )
         }
