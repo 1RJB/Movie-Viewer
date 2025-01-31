@@ -13,7 +13,7 @@ data class Movie(
     val title: String,
     val overview: String?,
     val poster_path: String?,
-    val releaseDate: String?,
+    val release_date: String?,
     val vote_average: Double?,
     val adult: Boolean?,
     @TypeConverters(Converters::class) val genres: List<Genre>?,
@@ -47,7 +47,16 @@ data class FavoriteMovie(
     @PrimaryKey val movieId: Int,
     val userId: String,
     val title: String,
-    val poster_path: String
+    val overview: String,
+    val poster_path: String,
+    val release_date: String,
+    val vote_average: Double,
+    val adult: Boolean,
+    @TypeConverters(Converters::class) val genres: List<Genre>,
+    val original_language: String?,
+    val runtime: Int?,
+    val vote_count: Int,
+    val revenue: Long
 )
 
 class Converters {
