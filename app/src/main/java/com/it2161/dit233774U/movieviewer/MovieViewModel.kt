@@ -23,9 +23,17 @@ class MovieViewModel(application: Application) : AndroidViewModel(application) {
     private val _reviews = MutableStateFlow<List<Review>>(emptyList())
     val reviews: StateFlow<List<Review>> = _reviews
 
+    // Similar Movies
+    private val _similarMovies = MutableStateFlow<List<Movie>>(emptyList())
+    val similarMovies: StateFlow<List<Movie>> = _similarMovies
+
     // Favorite movies
     private val _favoriteMovies = MutableStateFlow<List<FavoriteMovie>>(emptyList())
     val favoriteMovies: StateFlow<List<FavoriteMovie>> = _favoriteMovies
+
+    // Favorite movie check
+    private val _isFavorite = MutableStateFlow(false)
+    val isFavorite: StateFlow<Boolean> = _isFavorite
 
     // Currently logged-in user
     private val _currentUser = MutableStateFlow<User?>(null)
@@ -39,109 +47,110 @@ class MovieViewModel(application: Application) : AndroidViewModel(application) {
     private val _isOffline = MutableStateFlow(false)
     val isOffline: StateFlow<Boolean> = _isOffline
 
+    // Loading state
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading
+
+    // Error state
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error
+
     // ------------------- Movie fetching (TMDB) ------------------- //
-    fun getPopularMovies() {
-        viewModelScope.launch(Dispatchers.IO) {
+    private fun fetchMovies(fetchFunction: suspend () -> List<Movie>) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
             try {
-                val response = repository.getPopularMovies()
-                _movies.value = response.results
-                repository.cacheMovies(response.results)
+                val fetchedMovies = fetchFunction()
+                _movies.value = fetchedMovies
+                repository.cacheMovies(fetchedMovies)
             } catch (e: Exception) {
+                Log.e("MovieViewModel", "Error fetching movies", e)
                 if (_isOffline.value) {
                     _movies.value = repository.getCachedMovies()
+                } else {
+                    _error.value = "Failed to load movies: ${e.message}"
                 }
+            } finally {
+                _isLoading.value = false
             }
         }
     }
 
-    fun getTopRatedMovies() {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val response = repository.getTopRatedMovies()
-                _movies.value = response.results
-                repository.cacheMovies(response.results)
-            } catch (e: Exception) {
-                if (_isOffline.value) {
-                    _movies.value = repository.getCachedMovies()
-                }
-            }
-        }
-    }
-
-    fun getNowPlayingMovies() {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val response = repository.getNowPlayingMovies()
-                _movies.value = response.results
-                repository.cacheMovies(response.results)
-            } catch (e: Exception) {
-                if (_isOffline.value) {
-                    _movies.value = repository.getCachedMovies()
-                }
-            }
-        }
-    }
-
-    fun getUpcomingMovies() {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val response = repository.getUpcomingMovies()
-                _movies.value = response.results
-                repository.cacheMovies(response.results)
-            } catch (e: Exception) {
-                if (_isOffline.value) {
-                    _movies.value = repository.getCachedMovies()
-                }
-            }
-        }
-    }
+    fun getPopularMovies() = fetchMovies { repository.getPopularMovies() }
+    fun getTopRatedMovies() = fetchMovies { repository.getTopRatedMovies() }
+    fun getNowPlayingMovies() = fetchMovies { repository.getNowPlayingMovies() }
+    fun getUpcomingMovies() = fetchMovies { repository.getUpcomingMovies() }
 
     fun getMovieDetails(movieId: Int) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
             try {
                 _movieDetails.value = repository.getMovieDetails(movieId)
             } catch (e: Exception) {
+                Log.e("MovieViewModel", "Error fetching movie details", e)
                 if (_isOffline.value) {
                     _movieDetails.value = repository.getCachedMovieDetails(movieId)
+                } else {
+                    _error.value = "Failed to load movie details: ${e.message}"
                 }
+            } finally {
+                _isLoading.value = false
             }
         }
     }
 
     fun getMovieReviews(movieId: Int) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
             try {
                 val response = repository.getMovieReviews(movieId)
                 _reviews.value = response.results
             } catch (e: Exception) {
-                // Handle error or set empty list if offline
+                Log.e("MovieViewModel", "Error fetching movie reviews", e)
+                _error.value = "Failed to load reviews: ${e.message}"
                 _reviews.value = emptyList()
+            } finally {
+                _isLoading.value = false
             }
         }
     }
 
     fun searchMovies(query: String) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
             try {
                 val response = repository.searchMovies(query)
                 _movies.value = response.results
             } catch (e: Exception) {
-                // Handle error or search in cached movies if offline
+                Log.e("MovieViewModel", "Error searching movies", e)
                 if (_isOffline.value) {
                     _movies.value = repository.searchCachedMovies(query)
+                } else {
+                    _error.value = "Failed to search movies: ${e.message}"
                 }
+            } finally {
+                _isLoading.value = false
             }
         }
     }
 
     fun getSimilarMovies(movieId: Int) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
             try {
                 val response = repository.getSimilarMovies(movieId)
-                _movies.value = response.results
+                _similarMovies.value = response.results
             } catch (e: Exception) {
-                // Handle error or set empty list if offline
-                _movies.value = emptyList()
+                Log.e("MovieViewModel", "Error fetching similar movies", e)
+                _error.value = "Failed to load similar movies: ${e.message}"
+                _similarMovies.value = emptyList()
+            } finally {
+                _isLoading.value = false
             }
         }
     }
@@ -195,9 +204,11 @@ class MovieViewModel(application: Application) : AndroidViewModel(application) {
     fun addFavoriteMovie(movie: Movie) {
         viewModelScope.launch(Dispatchers.IO) {
             val userId = currentUser.value?.userId ?: return@launch
-            val favoriteMovie = FavoriteMovie(movie.id, userId, movie.title, movie.posterPath)
+            val favoriteMovie = FavoriteMovie(movie.id, userId, movie.title,
+                movie.posterPath.toString()
+            )
             repository.addFavoriteMovie(favoriteMovie)
-            getFavoriteMovies(userId)
+            _isFavorite.value = true
         }
     }
 
@@ -206,7 +217,15 @@ class MovieViewModel(application: Application) : AndroidViewModel(application) {
             val userId = currentUser.value?.userId ?: return@launch
             val favoriteMovie = _favoriteMovies.value.find { it.movieId == movieId } ?: return@launch
             repository.removeFavoriteMovie(favoriteMovie)
+            _isFavorite.value = false
             getFavoriteMovies(userId)
+        }
+    }
+
+    fun checkIfFavorite(movieId: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val userId = currentUser.value?.userId ?: return@launch
+            _isFavorite.value = repository.isFavoriteMovie(userId, movieId)
         }
     }
 
@@ -221,3 +240,4 @@ class MovieViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 }
+
