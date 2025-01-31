@@ -134,23 +134,15 @@ fun MovieListScreen(viewModel: MovieViewModel, navController: NavController) {
     val movies by viewModel.movies.collectAsState()
     var selectedCategory by remember { mutableStateOf("Popular") }
     val isOffline by viewModel.isOffline.collectAsState()
-    var isLoading by remember { mutableStateOf(true) }
-    var error by remember { mutableStateOf<String?>(null) }
+    val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
 
     LaunchedEffect(selectedCategory, isOffline) {
-        isLoading = true
-        error = null
-        try {
-            when (selectedCategory) {
-                "Popular" -> viewModel.getPopularMovies()
-                "Top Rated" -> viewModel.getTopRatedMovies()
-                "Now Playing" -> viewModel.getNowPlayingMovies()
-                "Upcoming" -> viewModel.getUpcomingMovies()
-            }
-        } catch (e: Exception) {
-            error = "Failed to load movies: ${e.message}"
-        } finally {
-            isLoading = false
+        when (selectedCategory) {
+            "Popular" -> viewModel.getPopularMovies()
+            "Top Rated" -> viewModel.getTopRatedMovies()
+            "Now Playing" -> viewModel.getNowPlayingMovies()
+            "Upcoming" -> viewModel.getUpcomingMovies()
         }
     }
 
@@ -161,10 +153,10 @@ fun MovieListScreen(viewModel: MovieViewModel, navController: NavController) {
                 .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(text = "Popular", modifier = Modifier.clickable { selectedCategory = "Popular" })
-            Text(text = "Top Rated", modifier = Modifier.clickable { selectedCategory = "Top Rated" })
-            Text(text = "Now Playing", modifier = Modifier.clickable { selectedCategory = "Now Playing" })
-            Text(text = "Upcoming", modifier = Modifier.clickable { selectedCategory = "Upcoming" })
+            CategoryButton("Popular", selectedCategory) { selectedCategory = "Popular" }
+            CategoryButton("Top Rated", selectedCategory) { selectedCategory = "Top Rated" }
+            CategoryButton("Now Playing", selectedCategory) { selectedCategory = "Now Playing" }
+            CategoryButton("Upcoming", selectedCategory) { selectedCategory = "Upcoming" }
         }
         if (isOffline) {
             Text("Offline mode: Showing cached movies", modifier = Modifier.padding(16.dp), color = MaterialTheme.colorScheme.error)
@@ -195,6 +187,18 @@ fun MovieListScreen(viewModel: MovieViewModel, navController: NavController) {
 }
 
 @Composable
+fun CategoryButton(category: String, selectedCategory: String, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (category == selectedCategory) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
+        )
+    ) {
+        Text(category)
+    }
+}
+
+@Composable
 fun MovieDetailScreen(viewModel: MovieViewModel, movieId: Int) {
     val movieDetails by viewModel.movieDetails.collectAsState()
     val reviews by viewModel.reviews.collectAsState()
@@ -210,16 +214,19 @@ fun MovieDetailScreen(viewModel: MovieViewModel, movieId: Int) {
     Column(modifier = Modifier.padding(16.dp)) {
         movieDetails?.let { movie ->
             AsyncImage(
-                model = "https://image.tmdb.org/t/p/w500${movie.posterPath}",
+                model = movie.posterPath?.let { "https://image.tmdb.org/t/p/w500$it" },
                 contentDescription = movie.title,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(300.dp)
             )
             Text(text = movie.title, style = MaterialTheme.typography.headlineMedium)
-            Text(text = "Release Date: ${movie.releaseDate}")
-            Text(text = "Rating: ${movie.voteAverage}")
-            Text(text = "Overview: ${movie.overview}")
+            movie.releaseDate?.let { Text(text = "Release Date: $it") }
+            movie.voteAverage?.let { Text(text = "Rating: $it") }
+            movie.overview?.let { Text(text = "Overview: $it") }
+            movie.genreIds?.let { ids ->
+                Text(text = "Genre IDs: ${ids.joinToString()}")
+            }
 
             if (!isOffline) {
                 Spacer(modifier = Modifier.height(16.dp))
@@ -312,15 +319,15 @@ fun FavoriteMoviesScreen(viewModel: MovieViewModel, navController: NavController
                         id = movie.movieId,
                         title = movie.title,
                         posterPath = movie.posterPath,
-                        releaseDate = "",
-                        voteAverage = 0.0,
-                        overview = "",
-                        adult = false,
-                        genres = emptyList(),
-                        originalLanguage = "",
-                        runtime = 0,
-                        voteCount = 0,
-                        revenue = 0
+                        releaseDate = null,
+                        voteAverage = null,
+                        overview = null,
+                        adult = null,
+                        genreIds = null,
+                        originalLanguage = null,
+                        runtime = null,
+                        voteCount = null,
+                        revenue = null
                     )
                 ) {
                     navController.navigate("movieDetail/${movie.movieId}")
@@ -377,7 +384,7 @@ fun MovieItem(movie: Movie, onClick: () -> Unit) {
             .padding(16.dp)
     ) {
         AsyncImage(
-            model = "https://image.tmdb.org/t/p/w185${movie.posterPath}",
+            model = movie.posterPath?.let { "https://image.tmdb.org/t/p/w185$it" } ?: R.drawable.placeholder,
             contentDescription = movie.title,
             modifier = Modifier.size(100.dp)
         )
@@ -385,10 +392,10 @@ fun MovieItem(movie: Movie, onClick: () -> Unit) {
         Column {
             Text(text = movie.title, style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(4.dp))
-            Text(text = movie.releaseDate, style = MaterialTheme.typography.bodyMedium)
+            Text(text = movie.releaseDate ?: "Release date unknown", style = MaterialTheme.typography.bodyMedium)
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Rating: ${movie.voteAverage}",
+                text = "Rating: ${movie.voteAverage?.toString() ?: "N/A"}",
                 style = MaterialTheme.typography.bodySmall
             )
         }
