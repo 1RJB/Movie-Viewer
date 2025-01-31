@@ -204,11 +204,10 @@ class MovieViewModel(application: Application) : AndroidViewModel(application) {
     fun addFavoriteMovie(movie: Movie) {
         viewModelScope.launch(Dispatchers.IO) {
             val userId = currentUser.value?.userId ?: return@launch
-            val favoriteMovie = FavoriteMovie(movie.id, userId, movie.title,
-                movie.poster_path.toString()
-            )
+            val favoriteMovie = FavoriteMovie(movie.id, userId, movie.title, movie.overview ?: "", movie.poster_path ?: "", movie.release_date ?: "", movie.vote_average ?: 0.0, movie.adult ?: false, movie.genres ?: emptyList(), movie.original_language, movie.runtime, movie.vote_count ?: 0, movie.revenue ?: 0)
             repository.addFavoriteMovie(favoriteMovie)
             _isFavorite.value = true
+            getFavoriteMovies(userId)
         }
     }
 
