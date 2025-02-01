@@ -266,7 +266,8 @@ fun MovieListScreen(viewModel: MovieViewModel, navController: NavController) {
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
                 ),
                 windowInsets = WindowInsets(0.dp)
             )
@@ -345,7 +346,8 @@ fun MovieListItem(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
             .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -371,7 +373,7 @@ fun MovieListItem(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Rating: ${movie.vote_average?.toString() ?: "N/A"}",
+                    text = "Vote Average: ${movie.vote_average?.toString() ?: "N/A"}",
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -379,7 +381,7 @@ fun MovieListItem(
                 Icon(
                     imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                     contentDescription = "Favorite",
-                    tint = Color(0xFF800080)  // Purple tint
+                    tint = Color(0xFFF44336)  // Purple tint
                 )
             }
         }
@@ -428,7 +430,7 @@ fun MovieDetailScreen(viewModel: MovieViewModel, movieId: Int, navController: Na
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
+            TopAppBar(
                 title = {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -461,7 +463,7 @@ fun MovieDetailScreen(viewModel: MovieViewModel, movieId: Int, navController: Na
                             Icon(
                                 imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                                 contentDescription = "Favorite",
-                                tint = Color(0xFF800080)
+                                tint = Color(0xFFF44336)
                             )
                         }
                     }
@@ -471,9 +473,10 @@ fun MovieDetailScreen(viewModel: MovieViewModel, movieId: Int, navController: Na
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    titleContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.secondary,
+                    titleContentColor = MaterialTheme.colorScheme.onSecondary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onSecondary
                 ),
                 windowInsets = WindowInsets(0.dp)
             )
@@ -586,14 +589,17 @@ fun ReviewItem(review: Review) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(text = review.author, style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(4.dp))
             Text(text = review.content, style = MaterialTheme.typography.bodyMedium)
         }
+
     }
+
 }
 
 @Composable
@@ -639,6 +645,8 @@ fun ProfileScreen(viewModel: MovieViewModel, navController: NavController) {
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    ,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 ),
                 windowInsets = WindowInsets(0.dp)
             )
