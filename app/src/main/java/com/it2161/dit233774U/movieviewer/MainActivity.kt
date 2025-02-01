@@ -30,7 +30,7 @@ class MainActivity : ComponentActivity() {
         // Create ViewModel using the factory
         viewModel = ViewModelProvider(this, MovieViewModelFactory(application))[MovieViewModel::class.java]
 
-        connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        connectivityManager = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
 
         // Set up network callback
         networkCallback = object : ConnectivityManager.NetworkCallback() {
