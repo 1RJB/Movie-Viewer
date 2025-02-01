@@ -18,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -236,7 +237,7 @@ fun MovieListScreen(viewModel: MovieViewModel, navController: NavController) {
     val isOffline by viewModel.isOffline.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
-    val favoriteMovies by viewModel.favoriteMovies.collectAsState()  // assumed to be a list of favorite movies
+    val favoriteMovies by viewModel.favoriteMovies.collectAsState()  // assumed list of favorite movies
 
     // Snackbar state and coroutine scope for notifications
     val snackbarHostState = remember { SnackbarHostState() }
@@ -254,7 +255,7 @@ fun MovieListScreen(viewModel: MovieViewModel, navController: NavController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Movies") },
+                title = { Text("Movies", fontWeight = FontWeight.Bold) },
                 actions = {
                     IconButton(onClick = { navController.navigate("search") }) {
                         Icon(Icons.Default.Search, contentDescription = "Search")
@@ -302,7 +303,7 @@ fun MovieListScreen(viewModel: MovieViewModel, navController: NavController) {
                 else -> {
                     LazyColumn {
                         items(movies) { movie ->
-                            // Determine whether this movie is already a favorite
+                            // Check if this movie is in favorites
                             val isFav = favoriteMovies.any { it.movieId == movie.id }
                             MovieListItem(
                                 movie = movie,
@@ -359,7 +360,10 @@ fun MovieListItem(
             )
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = movie.title, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    text = movie.title,
+                    style = MaterialTheme.typography.titleMedium
+                )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = movie.release_date ?: "Release date unknown",
@@ -374,7 +378,8 @@ fun MovieListItem(
             IconButton(onClick = onFavoriteClick) {
                 Icon(
                     imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                    contentDescription = "Favorite"
+                    contentDescription = "Favorite",
+                    tint = Color(0xFF800080)  // Purple tint
                 )
             }
         }
@@ -384,7 +389,6 @@ fun MovieListItem(
 @Composable
 fun CategorySelector(selectedCategory: String, onCategorySelected: (String) -> Unit) {
     val categories = listOf("Popular", "Top Rated", "Now Playing", "Upcoming")
-
     ScrollableTabRow(
         selectedTabIndex = categories.indexOf(selectedCategory),
         edgePadding = 16.dp,
@@ -424,10 +428,8 @@ fun MovieDetailScreen(viewModel: MovieViewModel, movieId: Int, navController: Na
 
     Scaffold(
         topBar = {
-            // Top bar without the favorite icon action
             CenterAlignedTopAppBar(
                 title = {
-                    // Use a Row so we can display the title and favorite button side-by-side
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
@@ -437,7 +439,8 @@ fun MovieDetailScreen(viewModel: MovieViewModel, movieId: Int, navController: Na
                             text = movieDetails?.title ?: "Movie Details",
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            fontWeight = FontWeight.Bold
                         )
                         // Favorite icon button beside the title
                         IconButton(onClick = {
@@ -457,7 +460,8 @@ fun MovieDetailScreen(viewModel: MovieViewModel, movieId: Int, navController: Na
                         }) {
                             Icon(
                                 imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                                contentDescription = "Favorite"
+                                contentDescription = "Favorite",
+                                tint = Color(0xFF800080)
                             )
                         }
                     }
@@ -695,11 +699,13 @@ fun ProfileScreen(viewModel: MovieViewModel, navController: NavController) {
 @Composable
 fun FavoriteMoviesScreen(viewModel: MovieViewModel, navController: NavController) {
     val favoriteMovies by viewModel.favoriteMovies.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Favorite Movies") },
+                title = { Text("Favorite Movies", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
@@ -712,6 +718,7 @@ fun FavoriteMoviesScreen(viewModel: MovieViewModel, navController: NavController
                 windowInsets = WindowInsets(0.dp)
             )
         },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         contentWindowInsets = WindowInsets(0.dp),
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
@@ -722,27 +729,31 @@ fun FavoriteMoviesScreen(viewModel: MovieViewModel, navController: NavController
                 modifier = Modifier.padding(innerPadding),
                 contentPadding = PaddingValues(vertical = 8.dp)
             ) {
-                items(favoriteMovies) { movie ->
-                    // Here, since this is the favorites screen, you may not need the favorite icon,
-                    // but we are reusing the updated MovieListItem.
+                items(favoriteMovies) { fav ->
+                    // Reuse MovieListItem; these movies are already favorited.
                     MovieListItem(
                         movie = Movie(
-                            id = movie.movieId,
-                            title = movie.title,
-                            poster_path = movie.poster_path,
-                            release_date = movie.release_date,
-                            vote_average = movie.vote_average,
-                            overview = movie.overview,
-                            adult = movie.adult,
-                            genres = movie.genres,
-                            original_language = movie.original_language,
-                            runtime = movie.runtime,
-                            vote_count = movie.vote_count,
-                            revenue = movie.revenue
+                            id = fav.movieId,
+                            title = fav.title,
+                            poster_path = fav.poster_path,
+                            release_date = fav.release_date,
+                            vote_average = fav.vote_average,
+                            overview = fav.overview,
+                            adult = fav.adult,
+                            genres = fav.genres,
+                            original_language = fav.original_language,
+                            runtime = fav.runtime,
+                            vote_count = fav.vote_count,
+                            revenue = fav.revenue
                         ),
-                        isFavorite = true,  // Already favorited
-                        onFavoriteClick = { viewModel.removeFavoriteMovie(movie.movieId) },
-                        onClick = { navController.navigate("movieDetail/${movie.movieId}") }
+                        isFavorite = true,
+                        onFavoriteClick = {
+                            viewModel.removeFavoriteMovie(fav.movieId)
+                            coroutineScope.launch {
+                                snackbarHostState.showSnackbar("Removed movie from favorites")
+                            }
+                        },
+                        onClick = { navController.navigate("movieDetail/${fav.movieId}") }
                     )
                 }
             }
@@ -759,10 +770,13 @@ fun SearchScreen(viewModel: MovieViewModel, navController: NavController) {
     val isLoading by viewModel.isLoading.collectAsState()
     val favoriteMovies by viewModel.favoriteMovies.collectAsState()
 
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Search Movies") },
+                title = { Text("Search Movies", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
@@ -775,6 +789,7 @@ fun SearchScreen(viewModel: MovieViewModel, navController: NavController) {
                 windowInsets = WindowInsets(0.dp)
             )
         },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         contentWindowInsets = WindowInsets(0.dp),
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
@@ -787,7 +802,10 @@ fun SearchScreen(viewModel: MovieViewModel, navController: NavController) {
                     .fillMaxWidth()
                     .padding(16.dp),
                 trailingIcon = {
-                    IconButton(onClick = { viewModel.searchMovies(query) }, enabled = !isOffline) {
+                    IconButton(
+                        onClick = { viewModel.searchMovies(query) },
+                        enabled = !isOffline
+                    ) {
                         Icon(Icons.Default.Search, contentDescription = "Search")
                     }
                 }
@@ -818,8 +836,17 @@ fun SearchScreen(viewModel: MovieViewModel, navController: NavController) {
                                 movie = movie,
                                 isFavorite = isFav,
                                 onFavoriteClick = {
-                                    if (isFav) viewModel.removeFavoriteMovie(movie.id)
-                                    else viewModel.addFavoriteMovie(movie)
+                                    if (isFav) {
+                                        viewModel.removeFavoriteMovie(movie.id)
+                                        coroutineScope.launch {
+                                            snackbarHostState.showSnackbar("Removed movie from favorites")
+                                        }
+                                    } else {
+                                        viewModel.addFavoriteMovie(movie)
+                                        coroutineScope.launch {
+                                            snackbarHostState.showSnackbar("Added movie to favorites")
+                                        }
+                                    }
                                 },
                                 onClick = { navController.navigate("movieDetail/${movie.id}") }
                             )
