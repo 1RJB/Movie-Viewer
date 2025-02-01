@@ -53,10 +53,10 @@ fun LoginScreen(viewModel: MovieViewModel, navController: NavController) {
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 ),
-                windowInsets = WindowInsets(0.dp) // Remove window insets to reduce spacing
+                windowInsets = WindowInsets(0.dp)
             )
         },
-        contentWindowInsets = WindowInsets(0.dp), // Remove content window insets
+        contentWindowInsets = WindowInsets(0.dp),
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
         Column(
@@ -158,10 +158,10 @@ fun RegisterScreen(viewModel: MovieViewModel, navController: NavController) {
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 ),
-                windowInsets = WindowInsets(0.dp) // Remove window insets to reduce spacing
+                windowInsets = WindowInsets(0.dp)
             )
         },
-        contentWindowInsets = WindowInsets(0.dp), // Remove content window insets
+        contentWindowInsets = WindowInsets(0.dp),
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
         Column(
@@ -238,7 +238,7 @@ fun MovieListScreen(viewModel: MovieViewModel, navController: NavController) {
     val isOffline by viewModel.isOffline.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
-    val favoriteMovies by viewModel.favoriteMovies.collectAsState()  // assumed list of favorite movies
+    val favoriteMovies by viewModel.favoriteMovies.collectAsState()
 
     // Snackbar state and coroutine scope for notifications
     val snackbarHostState = remember { SnackbarHostState() }
@@ -382,7 +382,7 @@ fun MovieListItem(
                 Icon(
                     imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                     contentDescription = "Favorite",
-                    tint = Color(0xFFF44336)  // Purple tint
+                    tint = Color(0xFFF44336)
                 )
             }
         }
@@ -500,8 +500,6 @@ fun MovieDetailScreen(viewModel: MovieViewModel, movieId: Int, navController: Na
                         .align(Alignment.CenterHorizontally),
                 )
                 Column(modifier = Modifier.padding(16.dp)) {
-                    // Movie title and (redundant) favorite button have been moved to the top bar.
-                    // Display other movie details:
                     Spacer(modifier = Modifier.height(8.dp))
                     MovieInfoItem("Release Date", movie.release_date)
                     MovieInfoItem("Vote Average", movie.vote_average?.toString())
