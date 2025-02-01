@@ -1,3 +1,28 @@
 <resources>
-    <string name="app_name">Movie Viewer Assignment 2</string>
+    <string name="app_name">233774U Movie Viewer</string>
+    <string name="login">Login</string>
+    <string name="register">Register</string>
+    <string name="user_id">User ID</string>
+    <string name="password">Password</string>
+    <string name="preferred_name">Preferred Name</string>
+    <string name="movies">Movies</string>
+    <string name="popular">Popular</string>
+    <string name="top_rated">Top Rated</string>
+    <string name="now_playing">Now Playing</string>
+    <string name="upcoming">Upcoming</string>
+    <string name="search">Search</string>
+    <string name="profile">Profile</string>
+    <string name="offline_mode">Offline mode: Showing cached movies</string>
+    <string name="no_movies_found">No movies found</string>
+    <string name="release_date">Release Date: %1$s</string>
+    <string name="rating">Rating: %1$s</string>
+    <string name="overview">Overview</string>
+    <string name="reviews">Reviews</string>
+    <string name="similar_movies">Similar Movies</string>
+    <string name="add_to_favorites">Add to Favorites</string>
+    <string name="remove_from_favorites">Remove from Favorites</string>
+    <string name="logout">Logout</string>
+    <string name="favorite_movies">Favorite Movies</string>
+    <string name="search_movies">Search Movies</string>
 </resources>
+
