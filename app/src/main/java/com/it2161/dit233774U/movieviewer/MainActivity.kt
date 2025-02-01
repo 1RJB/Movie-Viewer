@@ -1,6 +1,5 @@
 package com.it2161.dit233774U.movieviewer
 
-import android.content.Context
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
