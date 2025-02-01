@@ -53,7 +53,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             Log.d("MainActivity", "setContent called")
-            MaterialTheme {
+            MovieViewerTheme {
                 // Use a Scaffold to help manage top bars and offset from the status bar
                 Scaffold { innerPadding ->
                     Surface(
