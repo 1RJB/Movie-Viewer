@@ -1,24 +1,34 @@
 package com.it2161.dit233774U.movieviewer
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(viewModel: MovieViewModel, navController: NavController) {
     var userId by remember { mutableStateOf("") }
@@ -33,80 +43,99 @@ fun LoginScreen(viewModel: MovieViewModel, navController: NavController) {
         }
     }
 
-    // Use MaterialTheme spacing, alignment, and coloring for a more balanced layout
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),   // Adequate padding for balance
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        // Align text fields for a balanced look
-        Text(
-            text = "Login",
-            style = MaterialTheme.typography.titleLarge,  // Highlight the main screen heading
-            color = MaterialTheme.colorScheme.primary
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-
-        TextField(
-            value = userId,
-            onValueChange = { userId = it },
-            label = { Text("User ID") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        TextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Password") },
-            visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Primary action - visually prominent
-        Button(
-            onClick = { viewModel.loginUser(userId, password) },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !isOffline,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Login") },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ),
+                windowInsets = WindowInsets(0.dp) // Remove window insets to reduce spacing
             )
+        },
+        contentWindowInsets = WindowInsets(0.dp), // Remove content window insets
+        modifier = Modifier.fillMaxSize()
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Login", color = MaterialTheme.colorScheme.onPrimary)
-        }
-
-        // Show feedback for error
-        loginError?.let {
-            Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = it,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.error
+                text = "Welcome Back!",
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(bottom = 32.dp)
             )
-        }
-        Spacer(modifier = Modifier.height(8.dp))
 
-        // Secondary action - less prominent
-        TextButton(
-            onClick = { navController.navigate("register") },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !isOffline
-        ) {
-            Text("Register")
-        }
-
-        if (isOffline) {
-            Text(
-                "Offline mode: Login and registration are unavailable",
-                color = MaterialTheme.colorScheme.error
+            OutlinedTextField(
+                value = userId,
+                onValueChange = { userId = it },
+                label = { Text("User ID") },
+                modifier = Modifier.fillMaxWidth(),
+                leadingIcon = { Icon(Icons.Default.Person, contentDescription = "User ID") }
             )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = { Text("Password") },
+                visualTransformation = PasswordVisualTransformation(),
+                modifier = Modifier.fillMaxWidth(),
+                leadingIcon = { Icon(Icons.Default.Lock, contentDescription = "Password") }
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Button(
+                onClick = { viewModel.loginUser(userId, password) },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isOffline
+            ) {
+                Text("Login")
+            }
+
+            AnimatedVisibility(
+                visible = loginError != null,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                loginError?.let {
+                    Text(
+                        text = it,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            TextButton(
+                onClick = { navController.navigate("register") },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isOffline
+            ) {
+                Text("Don't have an account? Register")
+            }
+
+            if (isOffline) {
+                Text(
+                    "Offline mode: Login and registration are unavailable",
+                    color = MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(top = 16.dp)
+                )
+            }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(viewModel: MovieViewModel, navController: NavController) {
     var userId by remember { mutableStateOf("") }
@@ -114,48 +143,87 @@ fun RegisterScreen(viewModel: MovieViewModel, navController: NavController) {
     var preferredName by remember { mutableStateOf("") }
     val isOffline by viewModel.isOffline.collectAsState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        TextField(
-            value = userId,
-            onValueChange = { userId = it },
-            label = { Text("User ID") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        TextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Password") },
-            visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        TextField(
-            value = preferredName,
-            onValueChange = { preferredName = it },
-            label = { Text("Preferred Name") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(
-            onClick = {
-                viewModel.registerUser(userId, password, preferredName)
-                navController.navigate("login")
-            },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !isOffline
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Registration") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigate("login") }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ),
+                windowInsets = WindowInsets(0.dp) // Remove window insets to reduce spacing
+            )
+        },
+        contentWindowInsets = WindowInsets(0.dp), // Remove content window insets
+        modifier = Modifier.fillMaxSize()
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Register")
-        }
-        if (isOffline) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("Offline mode: Registration is unavailable", color = MaterialTheme.colorScheme.error)
+            Text(
+                text = "Create an Account",
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(bottom = 32.dp)
+            )
+
+            OutlinedTextField(
+                value = userId,
+                onValueChange = { userId = it },
+                label = { Text("User ID") },
+                modifier = Modifier.fillMaxWidth(),
+                leadingIcon = { Icon(Icons.Default.Person, contentDescription = "User ID") }
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = { Text("Password") },
+                visualTransformation = PasswordVisualTransformation(),
+                modifier = Modifier.fillMaxWidth(),
+                leadingIcon = { Icon(Icons.Default.Lock, contentDescription = "Password") }
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = preferredName,
+                onValueChange = { preferredName = it },
+                label = { Text("Preferred Name") },
+                modifier = Modifier.fillMaxWidth(),
+                leadingIcon = { Icon(Icons.Default.Edit, contentDescription = "Preferred Name") }
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Button(
+                onClick = {
+                    viewModel.registerUser(userId, password, preferredName)
+                    navController.navigate("login")
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isOffline
+            ) {
+                Text("Register")
+            }
+
+            if (isOffline) {
+                Text(
+                    "Offline mode: Registration is unavailable",
+                    color = MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(top = 16.dp)
+                )
+            }
         }
     }
 }
@@ -168,6 +236,11 @@ fun MovieListScreen(viewModel: MovieViewModel, navController: NavController) {
     val isOffline by viewModel.isOffline.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
+    val favoriteMovies by viewModel.favoriteMovies.collectAsState()  // assumed to be a list of favorite movies
+
+    // Snackbar state and coroutine scope for notifications
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(selectedCategory, isOffline) {
         when (selectedCategory) {
@@ -183,31 +256,37 @@ fun MovieListScreen(viewModel: MovieViewModel, navController: NavController) {
             TopAppBar(
                 title = { Text("Movies") },
                 actions = {
-                    IconButton(onClick = { navController.navigate("profile") }) {
-                        Icon(Icons.Default.AccountCircle, contentDescription = "Profile")
-                    }
                     IconButton(onClick = { navController.navigate("search") }) {
                         Icon(Icons.Default.Search, contentDescription = "Search")
                     }
-                }
+                    IconButton(onClick = { navController.navigate("profile") }) {
+                        Icon(Icons.Default.AccountCircle, contentDescription = "Profile")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ),
+                windowInsets = WindowInsets(0.dp)
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        contentWindowInsets = WindowInsets(0.dp),
+        modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
         Column(modifier = Modifier.padding(innerPadding)) {
-            LazyRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                item { CategoryButton("Popular", selectedCategory) { selectedCategory = "Popular" } }
-                item { CategoryButton("Top Rated", selectedCategory) { selectedCategory = "Top Rated" } }
-                item { CategoryButton("Now Playing", selectedCategory) { selectedCategory = "Now Playing" } }
-                item { CategoryButton("Upcoming", selectedCategory) { selectedCategory = "Upcoming" } }
+            CategorySelector(selectedCategory) { newCategory ->
+                selectedCategory = newCategory
             }
-            if (isOffline) {
-                Text("Offline mode: Showing cached movies", modifier = Modifier.padding(16.dp), color = MaterialTheme.colorScheme.error)
+
+            AnimatedVisibility(visible = isOffline) {
+                Text(
+                    "Offline mode: Showing cached movies",
+                    modifier = Modifier.padding(16.dp),
+                    color = MaterialTheme.colorScheme.error
+                )
             }
+
             when {
                 isLoading -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -215,17 +294,36 @@ fun MovieListScreen(viewModel: MovieViewModel, navController: NavController) {
                     }
                 }
                 error != null -> {
-                    Text(error!!, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
+                    ErrorMessage(error!!)
                 }
                 movies.isEmpty() -> {
-                    Text("No movies found", modifier = Modifier.padding(16.dp))
+                    EmptyState("No movies found")
                 }
                 else -> {
                     LazyColumn {
                         items(movies) { movie ->
-                            MovieItem(movie) {
-                                navController.navigate("movieDetail/${movie.id}")
-                            }
+                            // Determine whether this movie is already a favorite
+                            val isFav = favoriteMovies.any { it.movieId == movie.id }
+                            MovieListItem(
+                                movie = movie,
+                                isFavorite = isFav,
+                                onFavoriteClick = {
+                                    if (isFav) {
+                                        viewModel.removeFavoriteMovie(movie.id)
+                                        coroutineScope.launch {
+                                            snackbarHostState.showSnackbar("Removed movie from favorites")
+                                        }
+                                    } else {
+                                        viewModel.addFavoriteMovie(movie)
+                                        coroutineScope.launch {
+                                            snackbarHostState.showSnackbar("Added movie to favorites")
+                                        }
+                                    }
+                                },
+                                onClick = {
+                                    navController.navigate("movieDetail/${movie.id}")
+                                }
+                            )
                         }
                     }
                 }
@@ -235,17 +333,74 @@ fun MovieListScreen(viewModel: MovieViewModel, navController: NavController) {
 }
 
 @Composable
-fun CategoryButton(category: String, selectedCategory: String, onClick: () -> Unit) {
-    Button(
-        onClick = onClick,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = if (category == selectedCategory) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
-        )
+fun MovieListItem(
+    movie: Movie,
+    isFavorite: Boolean,
+    onFavoriteClick: () -> Unit,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clickable(onClick = onClick),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Text(category)
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AsyncImage(
+                model = movie.poster_path?.let { "https://image.tmdb.org/t/p/w185$it" },
+                contentDescription = movie.title,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp)),
+                contentScale = ContentScale.Crop
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = movie.title, style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = movie.release_date ?: "Release date unknown",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Rating: ${movie.vote_average?.toString() ?: "N/A"}",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+            IconButton(onClick = onFavoriteClick) {
+                Icon(
+                    imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    contentDescription = "Favorite"
+                )
+            }
+        }
     }
 }
 
+@Composable
+fun CategorySelector(selectedCategory: String, onCategorySelected: (String) -> Unit) {
+    val categories = listOf("Popular", "Top Rated", "Now Playing", "Upcoming")
+
+    ScrollableTabRow(
+        selectedTabIndex = categories.indexOf(selectedCategory),
+        edgePadding = 16.dp,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        categories.forEach { category ->
+            Tab(
+                selected = selectedCategory == category,
+                onClick = { onCategorySelected(category) },
+                text = { Text(category) }
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MovieDetailScreen(viewModel: MovieViewModel, movieId: Int, navController: NavController) {
     val movieDetails by viewModel.movieDetails.collectAsState()
@@ -253,6 +408,10 @@ fun MovieDetailScreen(viewModel: MovieViewModel, movieId: Int, navController: Na
     val similarMovies by viewModel.similarMovies.collectAsState()
     val isOffline by viewModel.isOffline.collectAsState()
     val isFavorite by viewModel.isFavorite.collectAsState()
+
+    // Snackbar state and coroutine scope for showing notifications
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(movieId) {
         viewModel.getMovieDetails(movieId)
@@ -263,71 +422,156 @@ fun MovieDetailScreen(viewModel: MovieViewModel, movieId: Int, navController: Na
         viewModel.checkIfFavorite(movieId)
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState())
-    ) {
-        movieDetails?.let { movie ->
-            AsyncImage(
-                model = movie.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" },
-                contentDescription = movie.title,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(300.dp)
-            )
-            Text(text = movie.title, style = MaterialTheme.typography.headlineMedium)
-            movie.release_date?.let { Text(text = "Release Date: $it") }
-            movie.vote_average?.let { Text(text = "Vote Average: $it") }
-            movie.adult?.let { Text(text = "Adult: $it") }
-            movie.runtime?.let { Text(text = "Runtime: $it minutes") }
-            movie.vote_count?.let { Text(text = "Vote Count: $it") }
-            movie.revenue?.let { Text(text = "Revenue: $it") }
-            movie.overview?.let { Text(text = "Overview: $it") }
-            movie.genres?.let { genres ->
-                Text(text = "Genres: ${genres.joinToString { it.name }}")
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
-                onClick = {
-                    if (isFavorite) {
-                        viewModel.removeFavoriteMovie(movie.id)
-                    } else {
-                        viewModel.addFavoriteMovie(movie)
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(if (isFavorite) "Remove from Favorites" else "Add to Favorites")
-            }
-
-            if (!isOffline) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("Reviews", style = MaterialTheme.typography.titleLarge)
-                // Use a Column instead of LazyColumn
-                Column {
-                    reviews.forEach { review ->
-                        ReviewItem(review)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("Similar Movies", style = MaterialTheme.typography.titleLarge)
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(similarMovies) { similarMovie ->
-                        MovieItem(similarMovie) {
-                            navController.navigate("movieDetail/${similarMovie.id}")
+    Scaffold(
+        topBar = {
+            // Top bar without the favorite icon action
+            CenterAlignedTopAppBar(
+                title = {
+                    // Use a Row so we can display the title and favorite button side-by-side
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        // Movie title
+                        Text(
+                            text = movieDetails?.title ?: "Movie Details",
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f)
+                        )
+                        // Favorite icon button beside the title
+                        IconButton(onClick = {
+                            movieDetails?.let { movie ->
+                                if (isFavorite) {
+                                    viewModel.removeFavoriteMovie(movie.id)
+                                    coroutineScope.launch {
+                                        snackbarHostState.showSnackbar("Removed movie from favorites")
+                                    }
+                                } else {
+                                    viewModel.addFavoriteMovie(movie)
+                                    coroutineScope.launch {
+                                        snackbarHostState.showSnackbar("Added movie to favorites")
+                                    }
+                                }
+                            }
+                        }) {
+                            Icon(
+                                imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                contentDescription = "Favorite"
+                            )
                         }
                     }
+                },
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigateUp() }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    titleContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                ),
+                windowInsets = WindowInsets(0.dp)
+            )
+        },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        contentWindowInsets = WindowInsets(0.dp),
+        modifier = Modifier.fillMaxSize()
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .verticalScroll(rememberScrollState())
+        ) {
+            movieDetails?.let { movie ->
+                AsyncImage(
+                    model = movie.poster_path?.let { "https://image.tmdb.org/t/p/original$it" },
+                    contentDescription = movie.title,
+                    modifier = Modifier
+                        .height(400.dp)
+                        .align(Alignment.CenterHorizontally),
+                )
+                Column(modifier = Modifier.padding(16.dp)) {
+                    // Movie title and (redundant) favorite button have been moved to the top bar.
+                    // Display other movie details:
+                    Spacer(modifier = Modifier.height(8.dp))
+                    MovieInfoItem("Release Date", movie.release_date)
+                    MovieInfoItem("Vote Average", movie.vote_average?.toString())
+                    MovieInfoItem("Adult", movie.adult?.toString())
+                    MovieInfoItem("Runtime", movie.runtime?.let { "$it minutes" })
+                    MovieInfoItem("Vote Count", movie.vote_count?.toString())
+                    MovieInfoItem("Revenue", movie.revenue?.toString())
+                    MovieInfoItem("Original Language", movie.original_language)
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Overview", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        movie.overview ?: "No overview available",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+
+                    movie.genres?.let { genres ->
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("Genres", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            genres.joinToString { it.name },
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+
+                    if (!isOffline) {
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Text("Reviews", style = MaterialTheme.typography.titleLarge)
+                        if (reviews.isEmpty()) {
+                            Text("No reviews available", style = MaterialTheme.typography.bodyMedium)
+                        } else {
+                            reviews.forEach { review ->
+                                ReviewItem(review)
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Text("Similar Movies", style = MaterialTheme.typography.titleLarge)
+                        if (similarMovies.isEmpty()) {
+                            Text("No similar movies found", style = MaterialTheme.typography.bodyMedium)
+                        } else {
+                            LazyRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                            ) {
+                                items(similarMovies) { similarMovie ->
+                                    SimilarMovieItem(similarMovie) {
+                                        navController.navigate("movieDetail/${similarMovie.id}")
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        Text(
+                            "Reviews and similar movies unavailable in offline mode",
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(top = 16.dp)
+                        )
+                    }
                 }
-            } else {
-                Text("Reviews and similar movies unavailable in offline mode", color = MaterialTheme.colorScheme.error)
+            } ?: run {
+                EmptyState("Movie details not available")
             }
+        }
+    }
+}
+
+@Composable
+fun MovieInfoItem(label: String, value: String?) {
+    value?.let {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(text = label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+            Text(text = it, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
@@ -337,127 +581,250 @@ fun ReviewItem(review: Review) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
+            .padding(vertical = 8.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(text = review.author, style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(4.dp))
             Text(text = review.content, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
 
 @Composable
-fun ProfileScreen(viewModel: MovieViewModel, navController: NavController) {
-    val currentUser by viewModel.currentUser.collectAsState()
-
+fun SimilarMovieItem(movie: Movie, onClick: () -> Unit) {
     Column(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+            .width(120.dp)
+            .clickable(onClick = onClick)
     ) {
-        currentUser?.let { user ->
-            Text("User ID: ${user.userId}", style = MaterialTheme.typography.titleLarge)
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("Preferred Name: ${user.preferredName}", style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(
-                onClick = { navController.navigate("favorites") },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("View Favorites")
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(
-                onClick = {
-                    viewModel.logout()
-                    navController.navigate("login")
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Logout")
-            }
-        } ?: run {
-            Text("Not logged in", style = MaterialTheme.typography.titleLarge)
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(
-                onClick = { navController.navigate("login") },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Go to Login")
-            }
-        }
+        AsyncImage(
+            model = movie.poster_path?.let { "https://image.tmdb.org/t/p/w185$it" },
+            contentDescription = movie.title,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(180.dp)
+                .clip(RoundedCornerShape(8.dp)),
+            contentScale = ContentScale.Crop
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = movie.title,
+            style = MaterialTheme.typography.bodyMedium,
+            maxLines = 2,
+            modifier = Modifier.padding(4.dp)
+        )
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FavoriteMoviesScreen(viewModel: MovieViewModel, navController: NavController) {
-    val favoriteMovies by viewModel.favoriteMovies.collectAsState()
+fun ProfileScreen(viewModel: MovieViewModel, navController: NavController) {
+    val currentUser by viewModel.currentUser.collectAsState()
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        Text(
-            "Favorite Movies",
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(16.dp)
-        )
-        LazyColumn {
-            items(favoriteMovies) { movie ->
-                MovieItem(
-                    Movie(
-                        id = movie.movieId,
-                        title = movie.title,
-                        poster_path = movie.poster_path,
-                        release_date = movie.release_date,
-                        vote_average = movie.vote_average,
-                        overview = movie.overview,
-                        adult = movie.adult,
-                        genres = movie.genres,
-                        original_language = movie.original_language,
-                        runtime = movie.runtime,
-                        vote_count = movie.vote_count,
-                        revenue = movie.revenue
-                    )
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Profile") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigateUp() }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ),
+                windowInsets = WindowInsets(0.dp)
+            )
+        },
+        contentWindowInsets = WindowInsets(0.dp),
+        modifier = Modifier.fillMaxSize()
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            currentUser?.let { user ->
+                Icon(
+                    Icons.Default.AccountCircle,
+                    contentDescription = "Profile Picture",
+                    modifier = Modifier.size(100.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Text(user.userId, style = MaterialTheme.typography.headlineMedium)
+                Text("Preferred Name: ${user.preferredName}", style = MaterialTheme.typography.bodyLarge)
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = { navController.navigate("favorites") },
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    navController.navigate("movieDetail/${movie.movieId}")
+                    Text("View Favorites")
+                }
+                Button(
+                    onClick = {
+                        viewModel.logout()
+                        navController.navigate("login") {
+                            popUpTo("movieList") { inclusive = true }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Logout")
+                }
+            } ?: run {
+                Text("Not logged in", style = MaterialTheme.typography.headlineMedium)
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = { navController.navigate("login") },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Go to Login")
                 }
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun FavoriteMoviesScreen(viewModel: MovieViewModel, navController: NavController) {
+    val favoriteMovies by viewModel.favoriteMovies.collectAsState()
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Favorite Movies") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigateUp() }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ),
+                windowInsets = WindowInsets(0.dp)
+            )
+        },
+        contentWindowInsets = WindowInsets(0.dp),
+        modifier = Modifier.fillMaxSize()
+    ) { innerPadding ->
+        if (favoriteMovies.isEmpty()) {
+            EmptyState("No favorite movies yet")
+        } else {
+            LazyColumn(
+                modifier = Modifier.padding(innerPadding),
+                contentPadding = PaddingValues(vertical = 8.dp)
+            ) {
+                items(favoriteMovies) { movie ->
+                    // Here, since this is the favorites screen, you may not need the favorite icon,
+                    // but we are reusing the updated MovieListItem.
+                    MovieListItem(
+                        movie = Movie(
+                            id = movie.movieId,
+                            title = movie.title,
+                            poster_path = movie.poster_path,
+                            release_date = movie.release_date,
+                            vote_average = movie.vote_average,
+                            overview = movie.overview,
+                            adult = movie.adult,
+                            genres = movie.genres,
+                            original_language = movie.original_language,
+                            runtime = movie.runtime,
+                            vote_count = movie.vote_count,
+                            revenue = movie.revenue
+                        ),
+                        isFavorite = true,  // Already favorited
+                        onFavoriteClick = { viewModel.removeFavoriteMovie(movie.movieId) },
+                        onClick = { navController.navigate("movieDetail/${movie.movieId}") }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(viewModel: MovieViewModel, navController: NavController) {
     val searchResults by viewModel.movies.collectAsState()
     var query by remember { mutableStateOf("") }
     val isOffline by viewModel.isOffline.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val favoriteMovies by viewModel.favoriteMovies.collectAsState()
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Text(text = "Search Movies", style = MaterialTheme.typography.titleLarge)
-        Spacer(modifier = Modifier.height(8.dp))
-        TextField(
-            value = query,
-            onValueChange = { query = it },
-            label = { Text("Search query") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Button(
-            onClick = {
-                viewModel.searchMovies(query)
-            },
-            enabled = !isOffline
-        ) {
-            Text("Search")
-        }
-        if (isOffline) {
-            Text("Offline mode: Searching in cached movies", color = MaterialTheme.colorScheme.error)
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-        LazyColumn {
-            items(searchResults) { movie ->
-                MovieItem(movie) {
-                    navController.navigate("movieDetail/${movie.id}")
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Search Movies") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigateUp() }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ),
+                windowInsets = WindowInsets(0.dp)
+            )
+        },
+        contentWindowInsets = WindowInsets(0.dp),
+        modifier = Modifier.fillMaxSize()
+    ) { innerPadding ->
+        Column(modifier = Modifier.padding(innerPadding)) {
+            OutlinedTextField(
+                value = query,
+                onValueChange = { query = it },
+                label = { Text("Search movies") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                trailingIcon = {
+                    IconButton(onClick = { viewModel.searchMovies(query) }, enabled = !isOffline) {
+                        Icon(Icons.Default.Search, contentDescription = "Search")
+                    }
+                }
+            )
+
+            if (isOffline) {
+                Text(
+                    "Offline mode: Searching in cached movies",
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
+
+            when {
+                isLoading -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
+                searchResults.isEmpty() -> {
+                    EmptyState("No results found")
+                }
+                else -> {
+                    LazyColumn {
+                        items(searchResults) { movie ->
+                            val isFav = favoriteMovies.any { it.movieId == movie.id }
+                            MovieListItem(
+                                movie = movie,
+                                isFavorite = isFav,
+                                onFavoriteClick = {
+                                    if (isFav) viewModel.removeFavoriteMovie(movie.id)
+                                    else viewModel.addFavoriteMovie(movie)
+                                },
+                                onClick = { navController.navigate("movieDetail/${movie.id}") }
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -465,36 +832,32 @@ fun SearchScreen(viewModel: MovieViewModel, navController: NavController) {
 }
 
 @Composable
-fun MovieItem(movie: Movie, onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(16.dp)
+fun EmptyState(message: String) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
     ) {
-        // Construct the full image URL
-        val imageUrl = if (movie.poster_path != null) {
-            "https://image.tmdb.org/t/p/w500/${movie.poster_path}"
-        } else {
-            R.drawable.placeholder  // Use placeholder if posterPath is null
-        }
-
-        AsyncImage(
-            model = imageUrl,
-            contentDescription = movie.title,
-            modifier = Modifier.size(100.dp)
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(16.dp)
         )
-        Spacer(modifier = Modifier.width(16.dp))
-        Column {
-            Text(text = movie.title, style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(text = movie.release_date ?: "Release date unknown", style = MaterialTheme.typography.bodyMedium)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "Vote Average: ${movie.vote_average?.toString() ?: "N/A"}",
-                style = MaterialTheme.typography.bodySmall
-            )
-        }
     }
 }
 
+@Composable
+fun ErrorMessage(message: String) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.error,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
