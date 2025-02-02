@@ -206,6 +206,7 @@ fun RegisterScreen(viewModel: MovieViewModel, navController: NavController) {
     var isConfirmPasswordVisible by remember { mutableStateOf(false) }
     var isPasswordFocused by remember { mutableStateOf(false) }
     var showRequirements by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
 
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
@@ -252,6 +253,10 @@ fun RegisterScreen(viewModel: MovieViewModel, navController: NavController) {
         }
     }
 
+    suspend fun checkUserIdExists(id: String): Boolean {
+        return viewModel.checkUserIdExists(id)
+    }
+
     val exitTransition = remember {
         slideOutHorizontally(
             targetOffsetX = { -300 },
@@ -291,171 +296,196 @@ fun RegisterScreen(viewModel: MovieViewModel, navController: NavController) {
             modifier = Modifier.fillMaxSize(),
             snackbarHost = { SnackbarHost(snackbarHostState) }
         ) { innerPadding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(horizontal = 16.dp)
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "Create an Account",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(bottom = 32.dp)
-                )
-
-                OutlinedTextField(
-                    value = userId,
-                    onValueChange = {
-                        userId = it
-                        validateUserId(it)
-                    },
-                    label = { Text("User ID") },
-                    modifier = Modifier.fillMaxWidth(),
-                    leadingIcon = { Icon(Icons.Default.Person, contentDescription = "User ID") },
-                    isError = userIdError != null,
-                    supportingText = { userIdError?.let { Text(it) } },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = {
-                        password = it
-                        validatePassword(it)
-                        showRequirements = !passwordRequirements.all { it.value }
-                        validateConfirmPassword(password, confirmPassword)
-                    },
-                    label = { Text("Password") },
-                    visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            if (isLoading) {
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .onFocusChanged { focusState ->
-                            isPasswordFocused = focusState.isFocused
-                            showRequirements = isPasswordFocused || !passwordRequirements.all { it.value }
-                        },
-                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = "Password") },
-                    trailingIcon = {
-                        IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
-                            Icon(
-                                imageVector = if (isPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
-                                contentDescription = if (isPasswordVisible) "Hide password" else "Show password"
-                            )
-                        }
-                    },
-                    isError = !passwordRequirements.all { it.value },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next)
-                )
-                AnimatedVisibility(
-                    visible = showRequirements,
-                    enter = fadeIn() + expandVertically(),
-                    exit = fadeOut() + shrinkVertically()
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Column(modifier = Modifier.padding(start = 16.dp, top = 8.dp)) {
-                        passwordRequirements.forEach { (requirement, isMet) ->
-                            Row(verticalAlignment = Alignment.CenterVertically) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .padding(horizontal = 16.dp)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Create an Account",
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(bottom = 32.dp)
+                    )
+
+                    OutlinedTextField(
+                        value = userId,
+                        onValueChange = {
+                            userId = it
+                            validateUserId(it)
+                        },
+                        label = { Text("User ID") },
+                        modifier = Modifier.fillMaxWidth(),
+                        leadingIcon = { Icon(Icons.Default.Person, contentDescription = "User ID") },
+                        isError = userIdError != null,
+                        supportingText = { userIdError?.let { Text(it) } },
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                        enabled = !isLoading
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = {
+                            password = it
+                            validatePassword(it)
+                            showRequirements = !passwordRequirements.all { it.value }
+                            validateConfirmPassword(password, confirmPassword)
+                        },
+                        label = { Text("Password") },
+                        visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .onFocusChanged { focusState ->
+                                isPasswordFocused = focusState.isFocused
+                                showRequirements = isPasswordFocused || !passwordRequirements.all { it.value }
+                            },
+                        leadingIcon = { Icon(Icons.Default.Lock, contentDescription = "Password") },
+                        trailingIcon = {
+                            IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
                                 Icon(
-                                    if (isMet) Icons.Default.Check else Icons.Default.Close,
-                                    contentDescription = if (isMet) "Requirement met" else "Requirement not met",
-                                    tint = if (isMet) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                                    modifier = Modifier.size(16.dp)
+                                    imageVector = if (isPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                                    contentDescription = if (isPasswordVisible) "Hide password" else "Show password"
                                 )
-                                Spacer(Modifier.width(4.dp))
-                                Text(
-                                    requirement,
-                                    color = if (isMet) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                                    style = MaterialTheme.typography.bodySmall
-                                )
+                            }
+                        },
+                        isError = !passwordRequirements.all { it.value },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next),
+                        enabled = !isLoading
+                    )
+                    AnimatedVisibility(
+                        visible = showRequirements,
+                        enter = fadeIn() + expandVertically(),
+                        exit = fadeOut() + shrinkVertically()
+                    ) {
+                        Column(modifier = Modifier.padding(start = 16.dp, top = 8.dp)) {
+                            passwordRequirements.forEach { (requirement, isMet) ->
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        if (isMet) Icons.Default.Check else Icons.Default.Close,
+                                        contentDescription = if (isMet) "Requirement met" else "Requirement not met",
+                                        tint = if (isMet) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(Modifier.width(4.dp))
+                                    Text(
+                                        requirement,
+                                        color = if (isMet) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
                             }
                         }
                     }
-                }
-                Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                OutlinedTextField(
-                    value = confirmPassword,
-                    onValueChange = {
-                        confirmPassword = it
-                        validateConfirmPassword(password, it)
-                    },
-                    label = { Text("Confirm Password") },
-                    visualTransformation = if (isConfirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth(),
-                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = "Confirm Password") },
-                    trailingIcon = {
-                        IconButton(onClick = { isConfirmPasswordVisible = !isConfirmPasswordVisible }) {
-                            Icon(
-                                imageVector = if (isConfirmPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
-                                contentDescription = if (isConfirmPasswordVisible) "Hide password" else "Show password"
-                            )
-                        }
-                    },
-                    isError = confirmPasswordError != null,
-                    supportingText = { confirmPasswordError?.let { Text(it) } },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next)
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-
-                OutlinedTextField(
-                    value = preferredName,
-                    onValueChange = {
-                        preferredName = it
-                        validatePreferredName(it)
-                    },
-                    label = { Text("Preferred Name") },
-                    modifier = Modifier.fillMaxWidth(),
-                    leadingIcon = { Icon(Icons.Default.Edit, contentDescription = "Preferred Name") },
-                    isError = preferredNameError != null,
-                    supportingText = { preferredNameError?.let { Text(it) } },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done)
-                )
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Button(
-                    onClick = {
-                        if (userId.isNotBlank() && password.isNotBlank() && confirmPassword.isNotBlank() && preferredName.isNotBlank() &&
-                            validateUserId(userId) && validatePassword(password) && validateConfirmPassword(password, confirmPassword) && validatePreferredName(preferredName)) {
-                            viewModel.registerUser(userId, password, preferredName)
-                            coroutineScope.launch {
-                                snackbarHostState.showSnackbar(
-                                    message = "Account successfully created",
-                                    duration = SnackbarDuration.Short,
-                                    withDismissAction = true
+                    OutlinedTextField(
+                        value = confirmPassword,
+                        onValueChange = {
+                            confirmPassword = it
+                            validateConfirmPassword(password, it)
+                        },
+                        label = { Text("Confirm Password") },
+                        visualTransformation = if (isConfirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        modifier = Modifier.fillMaxWidth(),
+                        leadingIcon = { Icon(Icons.Default.Lock, contentDescription = "Confirm Password") },
+                        trailingIcon = {
+                            IconButton(onClick = { isConfirmPasswordVisible = !isConfirmPasswordVisible }) {
+                                Icon(
+                                    imageVector = if (isConfirmPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                                    contentDescription = if (isConfirmPasswordVisible) "Hide password" else "Show password"
                                 )
                             }
-                            navController.navigate("login")
-                        } else {
-                            // Show error message for empty fields
-                            if (userId.isBlank()) userIdError = "User ID is required"
-                            if (password.isBlank()) showRequirements = true
-                            if (confirmPassword.isBlank()) confirmPasswordError = "Confirm password is required"
-                            if (preferredName.isBlank()) preferredNameError = "Preferred name is required"
-                            coroutineScope.launch {
-                                snackbarHostState.showSnackbar(
-                                    message = "Please fill all fields correctly",
-                                    duration = SnackbarDuration.Short,
-                                    withDismissAction = true
-                                )
-                            }
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !isOffline && userIdError == null && passwordRequirements.all { it.value } && confirmPasswordError == null && preferredNameError == null
-                ) {
-                    Text("Register")
-                }
-
-                if (isOffline) {
-                    Text(
-                        "Offline mode: Registration is unavailable",
-                        color = MaterialTheme.colorScheme.error,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(top = 16.dp)
+                        },
+                        isError = confirmPasswordError != null,
+                        supportingText = { confirmPasswordError?.let { Text(it) } },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next),
+                        enabled = !isLoading
                     )
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    OutlinedTextField(
+                        value = preferredName,
+                        onValueChange = {
+                            preferredName = it
+                            validatePreferredName(it)
+                        },
+                        label = { Text("Preferred Name") },
+                        modifier = Modifier.fillMaxWidth(),
+                        leadingIcon = { Icon(Icons.Default.Edit, contentDescription = "Preferred Name") },
+                        isError = preferredNameError != null,
+                        supportingText = { preferredNameError?.let { Text(it) } },
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        enabled = !isLoading
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Button(
+                        onClick = {
+                            coroutineScope.launch {
+                                if (userId.isNotBlank() && password.isNotBlank() && confirmPassword.isNotBlank() && preferredName.isNotBlank() &&
+                                    validateUserId(userId) && validatePassword(password) && validateConfirmPassword(password, confirmPassword) && validatePreferredName(preferredName)) {
+
+                                    isLoading = true
+                                    if (checkUserIdExists(userId)) {
+                                        userIdError = "User ID already exists"
+                                        snackbarHostState.showSnackbar(
+                                            message = "User ID already exists",
+                                            duration = SnackbarDuration.Short,
+                                            withDismissAction = true
+                                        )
+                                        isLoading = false
+                                    } else {
+                                        viewModel.registerUser(userId, password, preferredName)
+                                        snackbarHostState.showSnackbar(
+                                            message = "Account successfully created",
+                                            duration = SnackbarDuration.Short,
+                                            withDismissAction = true
+                                        )
+                                        navController.navigate("login")
+                                    }
+                                } else {
+                                    // Show error message for empty fields
+                                    if (userId.isBlank()) userIdError = "User ID is required"
+                                    if (password.isBlank()) showRequirements = true
+                                    if (confirmPassword.isBlank()) confirmPasswordError = "Confirm password is required"
+                                    if (preferredName.isBlank()) preferredNameError = "Preferred name is required"
+                                    snackbarHostState.showSnackbar(
+                                        message = "Please fill all fields correctly",
+                                        duration = SnackbarDuration.Short,
+                                        withDismissAction = true
+                                    )
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isOffline && userIdError == null && passwordRequirements.all { it.value } && confirmPasswordError == null && preferredNameError == null
+                    ) {
+                        Text("Register")
+                    }
+
+                    if (isOffline) {
+                        Text(
+                            "Offline mode: Registration is unavailable",
+                            color = MaterialTheme.colorScheme.error,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(top = 16.dp)
+                        )
+                    }
                 }
             }
         }
