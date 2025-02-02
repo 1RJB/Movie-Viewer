@@ -805,7 +805,7 @@ fun MovieDetailScreen(viewModel: MovieViewModel, movieId: Int, navController: Na
                         MovieInfoItem("Adult", movie.adult?.toString())
                         MovieInfoItem("Runtime", movie.runtime?.let { "$it minutes" })
                         MovieInfoItem("Vote Count", movie.vote_count?.toString())
-                        MovieInfoItem("Revenue", movie.revenue?.let { "$it USD" })
+                        MovieInfoItem("Revenue", movie.revenue?.let { "USD $it" })
                         MovieInfoItem("Original Language", movie.original_language)
 
                         Spacer(modifier = Modifier.height(16.dp))
