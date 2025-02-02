@@ -61,6 +61,10 @@ class Repository(context: Context) {
         if (user?.password == password) user else null
     }
 
+    suspend fun checkUserIdExists(userId: String): Boolean = withContext(Dispatchers.IO) {
+        userDao.getUser(userId) != null
+    }
+
     // ------------------- Favorite Movies ------------------- //
     suspend fun getFavoriteMovies(userId: String): List<FavoriteMovie> = withContext(Dispatchers.IO) {
         favoriteMovieDao.getFavoriteMovies(userId)
