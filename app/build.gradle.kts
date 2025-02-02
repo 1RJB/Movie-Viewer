@@ -52,15 +52,16 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
 
     // Compose BOM / Compose Libraries
-    implementation(platform("androidx.compose:compose-bom:2025.01.00"))
+    implementation(platform("androidx.compose:compose-bom:2025.01.01"))
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material:material")
+    implementation("androidx.compose.material:material-icons-extended-android:1.7.7")
 
     // Navigation
-    implementation("androidx.navigation:navigation-compose:2.8.5")
+    implementation("androidx.navigation:navigation-compose:2.8.6")
 
     // Retrofit
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
