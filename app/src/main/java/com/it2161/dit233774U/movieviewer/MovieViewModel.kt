@@ -194,6 +194,10 @@ class MovieViewModel(application: Application) : AndroidViewModel(application) {
         _favoriteMovies.value = emptyList()
     }
 
+    suspend fun checkUserIdExists(userId: String): Boolean {
+        return repository.checkUserIdExists(userId)
+    }
+
     // ------------------- Favorites ------------------- //
     fun getFavoriteMovies(userId: String) {
         viewModelScope.launch(Dispatchers.IO) {
